@@ -4,9 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-nltk = "*"
 
 [dev-packages]
+pylint = "*"
 
 [requires]
 python_version = "3.7"
