@@ -62,7 +62,6 @@ def get_probs(filepath, nrange):
     nlist=[]
     for i in range(nrange[0],nrange[1]):
         nlist.append(i)
-    print(nlist)
     for n in nlist:
         nGrams = get_ngrams(filepath, n)
         nMinusOne = get_ngrams(filepath, n-1)
@@ -77,6 +76,27 @@ def get_probs(filepath, nrange):
             if '/' not in key:
                 result[key]=value
         save_to_file(result,filepath,n)
+        metaresult[n]=result
+    return metaresult
+
+def get_probs_from_string(string, nrange):
+    metaresult={}
+    nlist=[]
+    for i in range(nrange[0],nrange[1]):
+        nlist.append(i)
+    for n in nlist:
+        nGrams = ncounts(string, n)
+        nMinusOne = ncounts(string, n-1)
+        result_with_slashes = {}
+        for gram in nGrams:
+            key = gram[0:n-1]
+            prior = nMinusOne[key]
+            probability = float(nGrams[gram]) / float(prior)
+            result_with_slashes[gram] = (probability,nGrams[gram])
+        result={}
+        for key,value in result_with_slashes.items():
+            if '/' not in key:
+                result[key]=value
         metaresult[n]=result
     return metaresult
 
