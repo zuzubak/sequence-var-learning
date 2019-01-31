@@ -4,7 +4,6 @@ import index
 import lookup
 import math
 import entropy
-reload(index)
 
 
 def combined(filepath,nrange,syllables='all'):
@@ -71,7 +70,7 @@ def separate(filepath,nrange,syllables='all'):
                     syllables.append(char)
     for syllable in syllables:
         print('syllable: '+syllable)
-        avdict=p(filepath,nrange,[syllable])
+        avdict=combined(filepath,nrange,[syllable])
         result[syllable]=avdict
     with open("./output/p.csv", 'w') as output_file:
         writer = csv.writer(output_file)

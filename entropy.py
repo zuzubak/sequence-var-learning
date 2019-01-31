@@ -1,7 +1,6 @@
 import math
 import index
 import csv
-reload(index)
 
 def p_to_ent(string,nrange):
     idct=index.get_probs_from_string(string,nrange)

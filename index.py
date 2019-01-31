@@ -18,6 +18,15 @@ def get_probs_from_csv(filepath):
 
     return probs
 
+def get_data_list(filepath):
+    with open(filepath) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        songs = []
+        for row in csv_reader:
+            songs.append(row[1])
+            line_count += 1
+    return songs
 
 def get_data_string(filepath):
     all_songs = ''

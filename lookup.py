@@ -33,7 +33,7 @@ def save_to_file(data_list,n):
                 row.append(item)
             writer.writerow(row)
 def lookup(idct,istr):
-    n=idct.keys()[-1]
+    n=list(idct.keys())[-1]
     ngramlist=nglist(istr,n)
     result=[]
     for ngram in ngramlist:
