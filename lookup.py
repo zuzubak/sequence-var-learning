@@ -32,7 +32,7 @@ def save_to_file(data_list,n):
             for item in info:
                 row.append(item)
             writer.writerow(row)
-def lookup(idct,istr):
+def lookup(idct,istr, backoff=1):
     n=list(idct.keys())[-1]
     ngramlist=nglist(istr,n)
     result=[]
@@ -42,12 +42,13 @@ def lookup(idct,istr):
         if ngram in idct[n]:
             minilist.append([idct[n][ngram][0],n])
         else:  #backoff, using lower-n entries in input dict. a record of which n is used for each char is kept in the third column of the output csv file.
-            for m, dct in idct.items():
-                mgram=ngram[-m:]
-                o=m+1
-                ogram=ngram[-o:]
-                if mgram in idct[m] and ogram not in idct[o]:
-                    minilist.append([idct[m][mgram][0],m])
+            if backoff==1:
+                for m, dct in idct.items():
+                    mgram=ngram[-m:]
+                    o=m+1
+                    ogram=ngram[-o:]
+                    if mgram in idct[m] and ogram not in idct[o]:
+                        minilist.append([idct[m][mgram][0],m])
             if len(minilist)==1:
                 minilist.append('not_found')
         result.append(minilist)

@@ -6,7 +6,7 @@ import math
 import entropy
 
 
-def combined(filepath,nrange,syllables='all'):
+def combined(filepath,nrange,syllables='all',backoff=1):
     ldict={}
     for n in range(nrange[0],nrange[1]):
         ldict[n]=[]
@@ -32,7 +32,7 @@ def combined(filepath,nrange,syllables='all'):
         held_out_string='/'.join(held_out_list)
         for n in range(nrange[0],nrange[1]):
             dct=entropy.p_to_ent(held_out_string,[nrange[0],n+1])
-            look=lookup.lookup(dct,data_list[i])
+            look=lookup.lookup(dct,data_list[i],backoff=backoff)
             for ktem in look:
                 #print('ktem='+str(ktem))
                 if ktem[0][-2] in syllables:
@@ -49,7 +49,7 @@ def combined(filepath,nrange,syllables='all'):
             avdict[key]=sum(probs)/len(probs)
         else:
             avdict[key]=0
-    with open("./output/p.csv", 'w') as output_file:
+    with open("./output/entropy.csv", 'w') as output_file:
         writer = csv.writer(output_file)
         for key, value in avdict.items():
             row=[]
@@ -58,7 +58,7 @@ def combined(filepath,nrange,syllables='all'):
             writer.writerow(row)
     return avdict     
 
-def separate(filepath,nrange,syllables='all'):
+def separate(filepath,nrange,syllables='all',backoff=1):
     result={}
     string=index.get_data_string(filepath)
     data_list=string.split('/')
@@ -70,9 +70,9 @@ def separate(filepath,nrange,syllables='all'):
                     syllables.append(char)
     for syllable in syllables:
         print('syllable: '+syllable)
-        avdict=combined(filepath,nrange,[syllable])
+        avdict=combined(filepath,nrange,[syllable],backoff=backoff)
         result[syllable]=avdict
-    with open("./output/p.csv", 'w') as output_file:
+    with open("./output/entropy.csv", 'w') as output_file:
         writer = csv.writer(output_file)
         for key, value in result.items():
             row=[]
@@ -110,3 +110,54 @@ def avg_p(filepath,nrange):
                         ilist.append(talue[0])
         idct[i]=sum(ilist)/len(ilist)
     return idct
+
+def combined_from_string(string,nrange,syllables='all',backoff=1):
+    ldict={}
+    for n in range(nrange[0],nrange[1]):
+        ldict[n]=[]
+    data_list=string.split('/')
+    if syllables=='all':
+        syllables=[]
+        for item in data_list:
+            for char in item:
+                if char not in syllables:
+                    syllables.append(char)
+    #print(data_list)
+    #print(len(data_list))
+    metadict={}
+    for i in range(0,len(data_list)):
+        #print(i)
+        result=[] 
+        held_out_list=[]
+        for item in data_list:
+            held_out_list.append(item)
+        held_out_list.remove(held_out_list[i])
+        print('calculating entropy for song '+str(i+1)+' of '+str(len(data_list)))
+        held_out_string='/'.join(held_out_list)
+        for n in range(nrange[0],nrange[1]):
+            dct=entropy.p_to_ent(held_out_string,[nrange[0],n+1])
+            look=lookup.lookup(dct,data_list[i],backoff=backoff)
+            for ktem in look:
+                #print('ktem='+str(ktem))
+                if ktem[0][-2] in syllables:
+                    ldict[len(ktem[0])].append(ktem[1][0])
+        i+=1
+    avdict={}
+    for key,value in ldict.items():
+        probs=[]
+        #print(len(value))
+        for item in value:
+            if type(item)==float:
+                probs.append(item)
+        if len(probs)>0:
+            avdict[key]=sum(probs)/len(probs)
+        else:
+            avdict[key]=0
+    with open("./output/entropy.csv", 'w') as output_file:
+        writer = csv.writer(output_file)
+        for key, value in avdict.items():
+            row=[]
+            row.append(key)
+            row.append(value)
+            writer.writerow(row)
+    return avdict

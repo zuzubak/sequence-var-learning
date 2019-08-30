@@ -1,3 +1,12 @@
+# assign a google cloud api key to the variable 'api_key' before running.
+# call avg_ratio(). Input arguments:
+#       1. list of [lat,long] coordinates that form a polygon within which to perform the calculation.
+#       2. number of observations to make (how many random pairs of points to test).
+#       3. (optional) minimum journey distance, in metres (defaults to zero)
+#       4. (optional) maximum journey distance, in metres (defaults to 1000000000)
+# Result is the average ratio between the distance as the crow flies and 'as the human walks';
+# Lower values (closer to 1) indicate more efficient street systems, higher values less efficient.
+
 import re
 import urllib
 import random
@@ -12,13 +21,14 @@ import shapely
 from shapely import geometry
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+
 pattern1=re.compile("[0-9]{1,3}(.[0-9])? k?m")
-base_url='https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=12.3456789,-22.3456789&destinations=32.3456789%2C-42.3456789%7C&mode=walking&key=AIzaSyA9zpgz98E5BieMwxU6EdC37B0rxGb2PvY'
+api_key='AIzaSyA9zpgz98E5BieMwxU6EdC37B0rxGb2PvY'
+base_url='https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=12.3456789,-22.3456789&destinations=32.3456789%2C-42.3456789%7C&mode=walking&key='+api_key
 
 
-def get_dist(point_a,point_b):
+def get_dist(point_a,point_b): #get shortest walking distance from point A [lat-coord, long-coord] to point B.
     new_url=base_url[0:78]+str(point_a[0])+','+str(point_a[1])+base_url[100:114]+str(point_b[0])+','+str(point_b[1])+base_url[141:]
-    #print(new_url)
     with urllib.request.urlopen(new_url) as response:
         jdict=json.loads(response.read())
     print(jdict)
@@ -29,7 +39,7 @@ def get_dist(point_a,point_b):
         result=jdict['rows'][0]['elements'][0]['distance']['value']
     return result 
 
-def ll_to_m(point_a,point_b):
+def ll_to_m(point_a,point_b): #calculate distance in metres between two coordinate points.
     R = 6373000 #Radius of the earth in metres
     lat1 = math.radians(point_a[0])
     lon1 = math.radians(point_a[1])

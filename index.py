@@ -28,15 +28,21 @@ def get_data_list(filepath):
             line_count += 1
     return songs
 
-def get_data_string(filepath):
+def get_data_string(filepath,date='all'):
     all_songs = ''
     with open(filepath) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         songs = []
-        for row in csv_reader:
-            songs.append(row[1])
-            line_count += 1
+        if date=='all':
+            for row in csv_reader:
+                songs.append(row[1])
+                line_count += 1
+        else:
+            for row in csv_reader:
+                if date in row[0]:
+                    songs.append(row[1])
+                line_count += 1
         all_songs = ('/').join(songs)
     return all_songs
 
@@ -51,8 +57,8 @@ def get_ngrams(filepath, n):
     songs_string = get_data_string(filepath)
     return ncounts(songs_string, n)
 
-def save_to_file(data_dict,filepath,n):
-    with open("./output/%sprobabilities-%s.csv" %(filepath[7:-4],n), 'w') as output_file:
+def save_to_file(data_dict,filepath,n,name='probabilities'):
+    with open("./output/%s%s-%s.csv" %(filepath[7:-4],name,n),'w') as output_file:
         writer = csv.writer(output_file)
         for key, value in data_dict.items():
             songs_string = get_data_string(filepath)
