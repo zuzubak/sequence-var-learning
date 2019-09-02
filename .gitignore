@@ -1,6 +1,7 @@
 data/
 output/
 .DS_Store
+distance/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
