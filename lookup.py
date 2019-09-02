@@ -1,10 +1,10 @@
-#lookup() takes a dictionary of dictionaries containing n-gram probabilities (one dictionary for each n), 
-#and an string, as input.
-#it returns and saves to './output/lookup.csv' the n-grams probabilites for each ngram in the string,
-#based on the input dict.
-#n is set by the highest n value present in the ngrams input dict.
-#uses backoff iff lower n's are provided in the input dict (idct).
-#input dict is the output of index.get_probs() (also in this folder).
+'''lookup() takes a dictionary of dictionaries containing n-gram probabilities (one dictionary for each n), 
+and an string, as input.
+it returns and saves to './output/lookup.csv' the n-grams probabilites for each ngram in the string,
+based on the input dict.
+n is set by the highest n value present in the ngrams input dict.
+uses backoff iff lower n's are provided in the input dict (idct).
+input dict is the output of index.get_probs() (also in this folder).'''
 
 import csv
 def nglist(istr,n): #list the ngrams 

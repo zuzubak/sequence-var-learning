@@ -1,17 +1,21 @@
 import csv
 import index
+from collections import Counter
+from nltk import ngrams
+import math
 
+#motifs =[['B','e','bcd'],['G','m','gd'],['K','m','dk']]
 motifs =[['B','e','bcd'],['G','m','gd'],['K','m','dk']]
+motif_list=[]
+for item in motifs:
+    motif_list.append(item[0])
 
-motifs = {'B':{'prefix':'e','essential':'bcd'},'G'}
-
-
-def data(filepath):
+def data(filepath,mode=False):
     with open(filepath) as csv_file:
         csv_reader=csv.reader(csv_file,delimiter=',')
         data=list(csv_reader)
     songs=[]
-    if mode=False:
+    if mode==False:
         for item in data:
             songs.append(item[1])
     return songs
@@ -54,8 +58,8 @@ def filler_len(filepath):
     motif_indices=get_motif_indices(filepath)
     result=[]
     new_result={}
-    for motif1 in ['B','G','K']:
-        for motif2 in ['B','G','K']:
+    for motif1 in motif_list:
+        for motif2 in motif_list:
             motif_list=[(motif1,motif2),[]]
             for i in range(len(motif_indices)-1):
                 if motif_indices[i][1]==motif1:
@@ -91,7 +95,7 @@ def filler_len_individual(filepath):
     save_to_file(result)
     return result
 
-def filler(filepath):
+def filler(filepath): #returns a list of all motif bigrams tokens, sandwiching the material that occurs between them
     songs=data(filepath)
     motif_indices=get_motif_indices(filepath)
     result=[]
@@ -104,7 +108,7 @@ def filler(filepath):
             result.append([item[1],songs[song_number][filler_start_ind:filler_end_ind],next_item[1]])
     return result
 
-def get_context(filepath,rare_transitions_only=False):
+def get_context(filepath,rare_transitions_only=False): #returns a dictionary for all motifs of which motifs precede and follow that motif most often.
     filler_list=filler(filepath)
     fillers={}
     for item in filler_list:
@@ -124,7 +128,7 @@ def get_context(filepath,rare_transitions_only=False):
             fillers[item[1]]={'pre':pre,'post':post}
     return fillers
 
-def bias(filepath,rare_transitions_only=False):
+def bias(filepath,rare_transitions_only=False): #determines whether the material to the left or the right of a given motif is more correlated with that motif.
     fillers=get_context(filepath,rare_transitions_only)
     pre_sum_list=[]
     for value in get_context(filepath,rare_transitions_only).values():
@@ -140,3 +144,52 @@ def bias(filepath,rare_transitions_only=False):
         post_list.append(max_post)
     return {'pre':sum(pre_list)/length,'post':sum(post_list)/length}
 
+def counts_to_p(idct):
+    odct={}
+    for key,value in idct.items():
+        denominator=sum(value.values())
+        odct[key]={}
+        for jey,ualue in value.items():
+            odct[key][jey]=ualue/denominator
+    return odct
+
+def p_to_ent(idct):
+    idct=counts_to_p(idct)
+    ent_dict={}
+    for key,value in idct.items():
+        ent_dict[key]=0
+        entropy=0
+        for ualue in value.values():
+            entropy+=ualue*math.log(ualue,2)
+        entropy=-entropy
+        ent_dict[key]=entropy
+    return ent_dict
+
+def ent(fp):
+    filler_list=filler(fp)
+    motif_bigrams=[]
+    filler_motif_bigrams=[]
+    for item in filler_list:
+        motif_bigrams.append([item[0],item[2]])
+        filler_motif_bigrams.append([item[1],item[2]])
+    out_dict={'motifs':{},'fillers':{}}
+    i=0
+    for jtem in [motif_bigrams,filler_motif_bigrams]:
+        motif_dict={}
+        if i==0:
+            key='motifs'
+        if i==1:
+            key='fillers'
+        for item in jtem:
+            if item[0] not in motif_dict.keys():
+                motif_dict[item[0]]={}
+            if item[1] not in motif_dict[item[0]].keys():
+                motif_dict[item[0]][item[1]]=1
+            else:motif_dict[item[0]][item[1]]+=1
+        out_dict[key]=motif_dict
+        i+=1
+    print(out_dict)
+    result={}
+    for key,value in out_dict.items():
+        result[key]=p_to_ent(value)
+    return result

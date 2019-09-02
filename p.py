@@ -4,7 +4,6 @@ import index
 import lookup
 import math
 import entropy
-reload(index)
 
 
 def combined(filepath,nrange,syllables='all'):

@@ -18,17 +18,20 @@ def get_probs_from_csv(filepath):
 
     return probs
 
-def get_data_list(filepath):
+def get_data_list(filepath,case_sensitive=False):
     with open(filepath) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         songs = []
         for row in csv_reader:
-            songs.append(row[1])
+            if case_sensitive==False:
+                songs.append(row[1].lower())
+            else:
+                songs.append(row[1])
             line_count += 1
     return songs
 
-def get_data_string(filepath,date='all'):
+def get_data_string(filepath,date='all',case_sensitive=False):
     all_songs = ''
     with open(filepath) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -36,7 +39,10 @@ def get_data_string(filepath,date='all'):
         songs = []
         if date=='all':
             for row in csv_reader:
-                songs.append(row[1])
+                if case_sensitive==False:
+                    songs.append(row[1].lower().replace('0',''))
+                else:
+                    songs.append(row[1])
                 line_count += 1
         else:
             for row in csv_reader:
@@ -57,8 +63,12 @@ def get_ngrams(filepath, n):
     songs_string = get_data_string(filepath)
     return ncounts(songs_string, n)
 
+def findlast(haystack, needle):
+    parts= haystack.split(needle)
+    return parts[-1]
+
 def save_to_file(data_dict,filepath,n,name='probabilities'):
-    with open("./output/%s%s-%s.csv" %(filepath[7:-4],name,n),'w') as output_file:
+    with open("./output/probabilities.csv",'w') as output_file:
         writer = csv.writer(output_file)
         for key, value in data_dict.items():
             songs_string = get_data_string(filepath)
@@ -79,13 +89,20 @@ def get_probs(filepath, nrange):
         nlist.append(i)
     for n in nlist:
         nGrams = get_ngrams(filepath, n)
-        nMinusOne = get_ngrams(filepath, n-1)
         result_with_slashes = {}
-        for gram in nGrams:
-            key = gram[0:n-1]
-            prior = nMinusOne[key]
-            probability = float(nGrams[gram]) / float(prior)
-            result_with_slashes[gram] = (probability,nGrams[gram])
+        if n==1:
+            prior=sum(nGrams.values())
+            for gram in nGrams:
+                key = gram[0:n-1]
+                probability = float(nGrams[gram]) / float(prior)
+                result_with_slashes[gram] = (probability,nGrams[gram])
+        else:
+            nMinusOne = get_ngrams(filepath, n-1)
+            for gram in nGrams:
+                key = gram[0:n-1]
+                prior = nMinusOne[key]
+                probability = float(nGrams[gram]) / float(prior)
+                result_with_slashes[gram] = (probability,nGrams[gram])
         result={}
         for key,value in result_with_slashes.items():
             if '/' not in key:
