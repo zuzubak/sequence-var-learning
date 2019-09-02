@@ -4,9 +4,20 @@ import index
 import lookup
 import math
 import entropy
+<<<<<<< HEAD
 
 
 def combined(filepath,nrange,syllables='all',backoff=1):
+=======
+reload(index)
+
+
+<<<<<<< Updated upstream
+def combined(filepath,nrange,syllables='all',backoff=1):
+=======
+def combined(filepath,nrange,syllables='all'):
+>>>>>>> test
+>>>>>>> Stashed changes
     ldict={}
     for n in range(nrange[0],nrange[1]):
         ldict[n]=[]
@@ -32,7 +43,15 @@ def combined(filepath,nrange,syllables='all',backoff=1):
         held_out_string='/'.join(held_out_list)
         for n in range(nrange[0],nrange[1]):
             dct=entropy.p_to_ent(held_out_string,[nrange[0],n+1])
+<<<<<<< Updated upstream
             look=lookup.lookup(dct,data_list[i],backoff=backoff)
+=======
+<<<<<<< HEAD
+            look=lookup.lookup(dct,data_list[i],backoff=backoff)
+=======
+            look=lookup.lookup(dct,data_list[i])
+>>>>>>> test
+>>>>>>> Stashed changes
             for ktem in look:
                 #print('ktem='+str(ktem))
                 if ktem[0][-2] in syllables:
@@ -49,7 +68,15 @@ def combined(filepath,nrange,syllables='all',backoff=1):
             avdict[key]=sum(probs)/len(probs)
         else:
             avdict[key]=0
+<<<<<<< Updated upstream
     with open("./output/entropy.csv", 'w') as output_file:
+=======
+<<<<<<< HEAD
+    with open("./output/entropy.csv", 'w') as output_file:
+=======
+    with open("./output/p.csv", 'w') as output_file:
+>>>>>>> test
+>>>>>>> Stashed changes
         writer = csv.writer(output_file)
         for key, value in avdict.items():
             row=[]
@@ -58,7 +85,15 @@ def combined(filepath,nrange,syllables='all',backoff=1):
             writer.writerow(row)
     return avdict     
 
+<<<<<<< Updated upstream
 def separate(filepath,nrange,syllables='all',backoff=1):
+=======
+<<<<<<< HEAD
+def separate(filepath,nrange,syllables='all',backoff=1):
+=======
+def separate(filepath,nrange,syllables='all'):
+>>>>>>> test
+>>>>>>> Stashed changes
     result={}
     string=index.get_data_string(filepath)
     data_list=string.split('/')
@@ -70,9 +105,21 @@ def separate(filepath,nrange,syllables='all',backoff=1):
                     syllables.append(char)
     for syllable in syllables:
         print('syllable: '+syllable)
+<<<<<<< Updated upstream
         avdict=combined(filepath,nrange,[syllable],backoff=backoff)
         result[syllable]=avdict
     with open("./output/entropy.csv", 'w') as output_file:
+=======
+<<<<<<< HEAD
+        avdict=combined(filepath,nrange,[syllable],backoff=backoff)
+        result[syllable]=avdict
+    with open("./output/entropy.csv", 'w') as output_file:
+=======
+        avdict=p(filepath,nrange,[syllable])
+        result[syllable]=avdict
+    with open("./output/p.csv", 'w') as output_file:
+>>>>>>> test
+>>>>>>> Stashed changes
         writer = csv.writer(output_file)
         for key, value in result.items():
             row=[]
@@ -82,6 +129,8 @@ def separate(filepath,nrange,syllables='all',backoff=1):
             writer.writerow(row)
     return result
 
+<<<<<<< HEAD
+=======
 '''for item,value in ldict:
         avg_dict[item]=sum(ldict[item])'''
 
@@ -95,6 +144,7 @@ def separate(filepath,nrange,syllables='all',backoff=1):
             result.append(item[1][0])
     return sum(result)/len(result)'''
 
+>>>>>>> test
 def avg_p(filepath,nrange):
     avgdict={}
     idct={}
@@ -109,7 +159,11 @@ def avg_p(filepath,nrange):
                     for iey,talue in ualue.items():
                         ilist.append(talue[0])
         idct[i]=sum(ilist)/len(ilist)
+<<<<<<< HEAD
     return idct
+=======
+    return idct
+<<<<<<< Updated upstream
 
 def combined_from_string(string,nrange,syllables='all',backoff=1):
     ldict={}
@@ -161,3 +215,6 @@ def combined_from_string(string,nrange,syllables='all',backoff=1):
             row.append(value)
             writer.writerow(row)
     return avdict
+=======
+>>>>>>> test
+>>>>>>> Stashed changes

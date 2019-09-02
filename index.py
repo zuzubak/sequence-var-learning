@@ -15,6 +15,7 @@ def get_probs_from_csv(filepath):
     with open(filepath) as csv_file:
         csv_reader=csv.reader(csv_file,delimiter=',')
         probs=list(csv_reader)
+<<<<<<< HEAD
 
     return probs
 
@@ -87,6 +88,7 @@ def get_probs(filepath, nrange):
     nlist=[]
     for i in range(nrange[0],nrange[1]):
         nlist.append(i)
+<<<<<<< HEAD
     for n in nlist:
         nGrams = get_ngrams(filepath, n)
         result_with_slashes = {}
@@ -108,6 +110,85 @@ def get_probs(filepath, nrange):
             if '/' not in key:
                 result[key]=value
         save_to_file(result,filepath,n)
+        metaresult[n]=result
+    return metaresult
+
+def get_probs_from_string(string, nrange):
+=======
+
+    return probs
+
+
+def get_data_string(filepath):
+    all_songs = ''
+    with open(filepath) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        songs = []
+        for row in csv_reader:
+            songs.append(row[1])
+            line_count += 1
+        all_songs = ('/').join(songs)
+    return all_songs
+
+def token(x):
+    return nltk.word_tokenize(x)
+def nc(string, n):
+	return Counter(ngrams(token(string),n))
+def ncounts(string,n):
+	return Counter(ngrams(token(" ".join(string)),n))
+
+def get_ngrams(filepath, n):
+    songs_string = get_data_string(filepath)
+    return ncounts(songs_string, n)
+
+def save_to_file(data_dict,filepath,n):
+    with open("./output/%sprobabilities-%s.csv" %(filepath[7:-4],n), 'w') as output_file:
+        writer = csv.writer(output_file)
+        for key, value in data_dict.items():
+            songs_string = get_data_string(filepath)
+            row=[]
+            concat=''
+            for item in key:
+                row.append(item)
+                concat=concat+item
+            row.append(concat)
+            for item in value:
+                row.append(item)
+            writer.writerow(row)
+
+def get_probs(filepath, nrange):
+>>>>>>> test
+    metaresult={}
+    nlist=[]
+    for i in range(nrange[0],nrange[1]):
+        nlist.append(i)
+<<<<<<< HEAD
+    for n in nlist:
+        nGrams = ncounts(string, n)
+        nMinusOne = ncounts(string, n-1)
+=======
+    print(nlist)
+=======
+>>>>>>> test
+    for n in nlist:
+        nGrams = get_ngrams(filepath, n)
+        nMinusOne = get_ngrams(filepath, n-1)
+>>>>>>> test
+        result_with_slashes = {}
+        for gram in nGrams:
+            key = gram[0:n-1]
+            prior = nMinusOne[key]
+            probability = float(nGrams[gram]) / float(prior)
+            result_with_slashes[gram] = (probability,nGrams[gram])
+        result={}
+        for key,value in result_with_slashes.items():
+            if '/' not in key:
+                result[key]=value
+<<<<<<< HEAD
+=======
+        save_to_file(result,filepath,n)
+>>>>>>> test
         metaresult[n]=result
     return metaresult
 

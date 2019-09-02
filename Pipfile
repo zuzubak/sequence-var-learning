@@ -7,7 +7,14 @@ name = "pypi"
 
 [dev-packages]
 pylint = "*"
+<<<<<<< HEAD
+<<<<<<< HEAD
 rope = "*"
+=======
+>>>>>>> test
+=======
+rope = "*"
+>>>>>>> test
 
 [requires]
 python_version = "3.7"
