@@ -1,7 +1,10 @@
 data/
 output/
+*.pyc 
 .DS_Store
 distance/
+__pycache__/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
