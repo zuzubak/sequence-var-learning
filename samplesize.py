@@ -2,6 +2,13 @@ import entropy
 import csv
 
 def print_ent_estimates(fp,nrange):
+    '''
+    Removes all but one song string (row) from the input file fp,
+    Then adds the strings back in one at a time, re-estimating nth-order 
+    entropies using entropy.avg_ent() after each addition.
+    Writes a csv file (./output/samplesize.csv) containing the entropy 
+    estimates for each sample size.
+    '''
     mode='w'
     with open(fp) as f:
         reader = csv.reader(f, delimiter="\n")

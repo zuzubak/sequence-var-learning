@@ -1,12 +1,11 @@
-'''
-Given a song file, shuffles the syllables of each song around randomly and writes the shuffled songs to a new file,
-'./output.shuffle.csv'
-'''
-
 import random
 import csv
 
 def shuffle(fp,sample_size=1):
+    '''
+    Given a song file, shuffles the syllables of each song around randomly and writes 
+    the shuffled songs to a new file, './output.shuffle.csv'
+    '''
     for i in range(sample_size):
         with open(fp) as f:
                 reader = csv.reader(f, delimiter="\n")

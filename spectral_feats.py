@@ -2,6 +2,13 @@ import os
 import csv
 
 def make_dict(filepath):
+        '''
+        Dict-ifies the contents of a csv containing mean spectral features for 
+        various syllables of various birds, in the format used in Logan's dataset.
+        The format goes like this, with one bird per row:
+        bird1ID,syllable1,syl1_feat1,syl1_feat2...,syl1_featn,,syllable2,syl2_feat1,syl2_feat2...,syl2_featn...
+        The output dict nests features within syllables within birds.
+        '''
         with open(filepath) as csv_file:
                 csv_reader = csv.reader(csv_file, delimiter=',')
                 line_count = 0
