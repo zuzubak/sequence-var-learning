@@ -24,7 +24,6 @@ def get_ngram_spectral_feats(filepath,ngram,bird_ID):
             means_dict[key]='no_data'
     return means_dict
 
-
 def ngram_info(fp,n,target_syllable='all',min_count=5,probs=False):
     out_list=[]
     ngrams=index.get_probs(fp,[n,n+1])[n]

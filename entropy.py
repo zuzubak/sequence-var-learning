@@ -4,13 +4,19 @@ import csv
 import shuffle
 
 def calculate_bias(filepath,nrange):
+    '''
+    Create a bias term to add to entropy estimations of p_to_ent, using sample size and other
+    characteristics of input strings. To be completed.
+    '''
     pass
     
 
 def p_to_ent(filepath,nrange):
-    '''Calculates the probability distributions for the songs in filepath for the nth order MMs included in nrange,
+    '''
+    Calculates probability distributions for the songs in filepath for the nth order MMs included in nrange,
     then using each nth-order prob distr, calculates the entropy at each (n-1)gram.
-    For hapax legomena, returns an H of 0.'''
+    For hapax legomena, returns an H of 0.
+    '''
     idct=index.get_probs(filepath,nrange)
     out_dict={}
     for n in idct.keys():
@@ -45,6 +51,8 @@ def p_to_ent(filepath,nrange):
     
 def avg_ent(filepath,nrange,shuffle_mode=False):
     '''
+    For each n (Markov order) in the parameter nrange, averages entropy 
+    across all n-grams, estimating the entropy rate of the songs in filepath.
     '''
     if shuffle_mode==True:
         shuffle.shuffle(filepath)
