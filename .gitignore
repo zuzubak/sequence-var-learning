@@ -1,5 +1,6 @@
 data/
 output/
+nest_comparison/
 *.pyc 
 .DS_Store
 distance/
