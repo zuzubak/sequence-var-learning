@@ -23,5 +23,4 @@ def bootstrap(baseline_prob,test_prob,test_sample_size,n_iterations=10000):
         if baseline_prob>test_prob:
             if prob<=test_prob:
                 d+=1
-    return 1-(d/n_iterations)
-            
+    return 1-(d/n_iterations)s
