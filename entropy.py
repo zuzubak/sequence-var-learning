@@ -9,13 +9,13 @@ def calculate_bias(filepath,nrange):
     characteristics of input strings. To be completed.
     '''
     pass
-    
 
-def p_to_ent(filepath,nrange):
+def gather_branchpoints(filepath,nrange):
     '''
-    Calculates probability distributions for the songs in filepath for the nth order MMs included in nrange,
-    then using each nth-order prob distr, calculates the entropy at each (n-1)gram.
-    For hapax legomena, returns an H of 0.
+    Compiles the transition probabilities from index.get_probs into probability distributions
+    for branch points (prefixes). For each n in the output dict, this set of probability distribution
+    is found at [beginnings_dict], while the other entry ['total_ngram_count'] stores the total number
+    of ngram tokens for that n.
     '''
     idct=index.get_probs(filepath,nrange)
     out_dict={}
@@ -32,7 +32,36 @@ def p_to_ent(filepath,nrange):
         for ngram,prob_count in ngram_dict.items():
             beginnings_dict[ngram[:-1]][0].append(ngram)
             beginnings_dict[ngram[:-1]][1].append(prob_count[0])
-            beginnings_dict[ngram[:-1]][2].append(prob_count[1])    
+            beginnings_dict[ngram[:-1]][2].append(prob_count[1])
+        out_dict[n]={'beginnings_dict':beginnings_dict,'total_ngram_count':total_ngram_count}
+    return out_dict
+
+def branchpoints(filepath,nrange):
+    idct=gather_branchpoints(filepath,nrange)
+    out_dict={}
+    for n, ndict in idct.items():
+        n_out_dict={}
+        beginnings_dict=ndict['beginnings_dict']
+        for branchpoint,matrix in beginnings_dict.items():
+            n_out_dict[branchpoint]={'transitions':{},'count':sum(matrix[2])}
+            for i in range(len(matrix[0])):
+                ngram=matrix[0][i]
+                transition=(ngram[-1])
+                n_out_dict[branchpoint]['transitions'][transition]=matrix[1][i]
+        out_dict[n]=n_out_dict
+    return out_dict
+
+def p_to_ent(filepath,nrange):
+    '''
+    Calculates probability distributions for the songs in filepath for the nth order MMs included in nrange,
+    then using each nth-order prob distr, calculates the entropy at each (n-1)gram.
+    For hapax legomena, returns an H of 0.
+    '''
+    idct=gather_branchpoints(filepath,nrange)
+    out_dict={}
+    for n,n_dict in idct.items():
+        beginnings_dict=n_dict['beginnings_dict']
+        total_ngram_count=n_dict['total_ngram_count']
         entropy_dict={}
         for beginning in beginnings_dict.keys():
             probabilities_list=beginnings_dict[beginning][1]
@@ -48,7 +77,7 @@ def p_to_ent(filepath,nrange):
             entropy_dict[beginning]= (-1*sum(entropy_terms),sum(counts_list))
         out_dict[n]=entropy_dict
     return (out_dict)
-    
+
 def avg_ent(filepath,nrange,shuffle_mode=False):
     '''
     For each n (Markov order) in the parameter nrange, averages entropy 

@@ -70,7 +70,6 @@ def info_and_feats(songs_fp,n,spectral_fp,bird_ID):
         mode='a'
     return out_list
 
-
 '''
     if ent_fp=='none':
         ent_fp=fp

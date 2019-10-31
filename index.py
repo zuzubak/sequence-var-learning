@@ -32,16 +32,20 @@ def get_data_list(filepath,case_sensitive=False):
 
 def get_data_string(filepath,date='all',case_sensitive=False):
     all_songs = ''
+    backwards=False
     with open(filepath) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         songs = []
         if date=='all':
             for row in csv_reader:
+                song=row[1]
+                if backwards==True:
+                    song=song[::-1]
                 if case_sensitive==False:
-                    songs.append(row[1].lower().replace('0',''))
+                    songs.append(song.lower().replace('0',''))
                 else:
-                    songs.append(row[1])
+                    songs.append(song)
                 line_count += 1
         else:
             for row in csv_reader:
@@ -161,5 +165,23 @@ def get_probs_from_string(string, nrange):
         if gram in result:
             test_result[gram]=result[gram]
         else:
-            test_result[gram]='not_found'''
+            test_result[gram]='not_found
     return result
+
+class Parser:
+
+    n_ranges = {}
+
+    def __init__(self,filepath):
+        self.filepath=filepath
+
+    def getProbs(self, nrange):
+        print(filepath)
+        
+        result = get_probs(filepath,nrange)
+        
+        n_ranges[nrange] = result'''
+
+
+
+

@@ -1,7 +1,8 @@
 import entropy
 import csv
+import random
 
-def print_ent_estimates(fp,nrange):
+def print_ent_estimates(fp,nrange,shuffle=False):
     '''
     Removes all but one song string (row) from the input file fp,
     Then adds the strings back in one at a time, re-estimating nth-order 
@@ -16,7 +17,10 @@ def print_ent_estimates(fp,nrange):
         lines=[]
         for line in lines_unformatted:
             lines.append(line[0])
+    if shuffle==True:
+        random.shuffle(lines)
     for i in range(len(lines)):
+        print(str(i)+' of '+str(len(lines)))
         line=lines[i]
         with open(fp, mode) as output_file:
             writer = csv.writer(output_file)

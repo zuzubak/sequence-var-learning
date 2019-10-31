@@ -7,19 +7,16 @@ def make_info_graphs(directory,nrange,shuffle_mode=False):
     LOL=[]
     mode='w'
     for filename in os.listdir(directory):
-        print(filename)
         info_profile=entropy.avg_ent(directory+'/'+filename,nrange,shuffle_mode)
-        print(info_profile)
         row=[filename]
         for value in info_profile.values():
             row.append(value)
-        print(row)
         with open("./output/batchent.csv", mode) as output_file:
             writer = csv.writer(output_file)
             writer.writerow(row)
         mode='a'
 
-def batch_syl_info_and_feats(directory,n,spectral_fp,prefix='fathers_and_sons_from_logan - '):
+def batch_syl_info_and_feats(directory='./data/BFs_logan/data',n=2,spectral_fp='./data/spectral.csv',prefix='fathers_and_sons_from_logan - '):
     LOL=[]
     mode='w'
     for filename in os.listdir(directory):
@@ -54,18 +51,16 @@ def nest_comparison(bird_IDs,directory,n,spectral_fp,index,prefix='fathers_and_s
     bird1=bird_IDs[0]
     bird1_syllables=[]
     for syl in bird_syls:
-        print(syl)
         if syl[0]==bird1 and syl not in bird1_syllables:
             bird1_syllables.append(syl[1])
-    print(bird1_syllables)
     current_list=bird1_syllables
     for bird in bird_IDs[1:]:
+        print(bird)
         current_bird_syllables=[]
         for syl in bird_syls:
             if syl[0]==bird and syl not in current_bird_syllables:
                 current_bird_syllables.append(syl[1])
         current_list=list(set(current_list).intersection(current_bird_syllables))
-    print(current_list)
     current_list.sort()
     header=bird_IDs
     header.insert(0,'Syllable')
@@ -79,10 +74,10 @@ def nest_comparison(bird_IDs,directory,n,spectral_fp,index,prefix='fathers_and_s
                 birds_seen.append(row[0])
         data.append(minilist)
     mode='w'
-    print(data)
     for row in data:
-        with open("./nest_comparison/%s_nest_comparison.csv" % nest_name, mode) as output_file:
+        with open("./data/nest_comparison/%s_nest_comparison.csv" % nest_name, mode) as output_file:
             writer = csv.writer(output_file)
             writer.writerow(row)
         mode='a'
     return data
+

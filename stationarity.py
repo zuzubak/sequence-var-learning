@@ -27,5 +27,3 @@ def s(filepath,nrange,mchunks):
             n_result[m]=ent.combined_from_string(get_data_string(filepath,m,mchunks),nrange)
         result[n]=n_result
     return result
-
-
