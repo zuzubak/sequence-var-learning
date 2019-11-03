@@ -3,144 +3,157 @@ import index
 import csv
 import shuffle
 
-def calculate_bias(filepath,nrange):
+
+def calculate_bias(filepath, nrange):
     '''
     Create a bias term to add to entropy estimations of p_to_ent, using sample size and other
     characteristics of input strings. To be completed.
     '''
     pass
 
-def gather_branchpoints(filepath,nrange):
+
+def gather_branchpoints(filepath, nrange):
     '''
     Compiles the transition probabilities from index.get_probs into probability distributions
     for branch points (prefixes). For each n in the output dict, this set of probability distribution
     is found at [beginnings_dict], while the other entry ['total_ngram_count'] stores the total number
     of ngram tokens for that n.
     '''
-    idct=index.get_probs(filepath,nrange)
-    out_dict={}
+    idct = index.get_probs(filepath, nrange)
+    out_dict = {}
     for n in idct.keys():
-        ngram_dict=idct[n]
-        ngram_count_list=[]
+        ngram_dict = idct[n]
+        ngram_count_list = []
         for value in ngram_dict.values():
-            ngram_count_list.append(value[1]) 
-        total_ngram_count=sum(ngram_count_list)
-        beginnings_dict={}
+            ngram_count_list.append(value[1])
+        total_ngram_count = sum(ngram_count_list)
+        beginnings_dict = {}
         for ngram in ngram_dict.keys():
-            if ngram[:-1] not in beginnings_dict.keys(): 
-                beginnings_dict[ngram[:-1]]=[[],[],[]]
-        for ngram,prob_count in ngram_dict.items():
+            if ngram[:-1] not in beginnings_dict.keys():
+                beginnings_dict[ngram[:-1]] = [[], [], []]
+        for ngram, prob_count in ngram_dict.items():
             beginnings_dict[ngram[:-1]][0].append(ngram)
             beginnings_dict[ngram[:-1]][1].append(prob_count[0])
             beginnings_dict[ngram[:-1]][2].append(prob_count[1])
-        out_dict[n]={'beginnings_dict':beginnings_dict,'total_ngram_count':total_ngram_count}
+        out_dict[n] = {
+            'beginnings_dict': beginnings_dict,
+            'total_ngram_count': total_ngram_count}
     return out_dict
 
-def branchpoints(filepath,nrange):
-    idct=gather_branchpoints(filepath,nrange)
-    out_dict={}
+
+def branchpoints(filepath, nrange):
+    idct = gather_branchpoints(filepath, nrange)
+    out_dict = {}
     for n, ndict in idct.items():
-        n_out_dict={}
-        beginnings_dict=ndict['beginnings_dict']
-        for branchpoint,matrix in beginnings_dict.items():
-            n_out_dict[branchpoint]={'transitions':{},'count':sum(matrix[2])}
+        n_out_dict = {}
+        beginnings_dict = ndict['beginnings_dict']
+        for branchpoint, matrix in beginnings_dict.items():
+            n_out_dict[branchpoint] = {
+                'transitions': {}, 'count': sum(
+                    matrix[2])}
             for i in range(len(matrix[0])):
-                ngram=matrix[0][i]
-                transition=(ngram[-1])
-                n_out_dict[branchpoint]['transitions'][transition]=matrix[1][i]
-        out_dict[n]=n_out_dict
+                ngram = matrix[0][i]
+                transition = (ngram[-1])
+                n_out_dict[branchpoint]['transitions'][transition] = matrix[1][i]
+        out_dict[n] = n_out_dict
     return out_dict
 
-def p_to_ent(filepath,nrange):
+
+def p_to_ent(filepath, nrange):
     '''
     Calculates probability distributions for the songs in filepath for the nth order MMs included in nrange,
     then using each nth-order prob distr, calculates the entropy at each (n-1)gram.
     For hapax legomena, returns an H of 0.
     '''
-    idct=gather_branchpoints(filepath,nrange)
-    out_dict={}
-    for n,n_dict in idct.items():
-        beginnings_dict=n_dict['beginnings_dict']
-        total_ngram_count=n_dict['total_ngram_count']
-        entropy_dict={}
+    idct = gather_branchpoints(filepath, nrange)
+    out_dict = {}
+    for n, n_dict in idct.items():
+        beginnings_dict = n_dict['beginnings_dict']
+        total_ngram_count = n_dict['total_ngram_count']
+        entropy_dict = {}
         for beginning in beginnings_dict.keys():
-            probabilities_list=beginnings_dict[beginning][1]
-            counts_list=beginnings_dict[beginning][2]
-            ngrams_list=beginnings_dict[beginning][0]
-            entropy_terms=[]
-            i=0
+            probabilities_list = beginnings_dict[beginning][1]
+            counts_list = beginnings_dict[beginning][2]
+            ngrams_list = beginnings_dict[beginning][0]
+            entropy_terms = []
+            i = 0
             for probability in probabilities_list:
-                unconditional_probability=counts_list[i]/total_ngram_count
-                ngram=ngrams_list[i]
-                entropy_terms.append(probability*math.log(probability,2))
-                i+=1
-            entropy_dict[beginning]= (-1*sum(entropy_terms),sum(counts_list))
-        out_dict[n]=entropy_dict
+                unconditional_probability = counts_list[i] / total_ngram_count
+                ngram = ngrams_list[i]
+                entropy_terms.append(probability * math.log(probability, 2))
+                i += 1
+            entropy_dict[beginning] = (-1 *
+                                       sum(entropy_terms), sum(counts_list))
+        out_dict[n] = entropy_dict
     return (out_dict)
 
-def avg_ent(filepath,nrange,shuffle_mode=False):
+
+def avg_ent(filepath, nrange, shuffle_mode=False):
     '''
-    For each n (Markov order) in the parameter nrange, averages entropy 
+    For each n (Markov order) in the parameter nrange, averages entropy
     across all n-grams, estimating the entropy rate of the songs in filepath.
     '''
-    if shuffle_mode==True:
+    if shuffle_mode:
         shuffle.shuffle(filepath)
-        filepath='./output/shuffle.csv'
-    ndct=p_to_ent(filepath,nrange)
-    #print(ndct)
-    result={}
-    for key,value in ndct.items():
-        n=key
-        ls=[]
-        for jey,ualue in value.items():
-            #if ualue[1]>1:
+        filepath = './output/shuffle.csv'
+    ndct = p_to_ent(filepath, nrange)
+    # print(ndct)
+    result = {}
+    for key, value in ndct.items():
+        n = key
+        ls = []
+        for jey, ualue in value.items():
+            # if ualue[1]>1:
             for i in range(ualue[1]):
                 ls.append(ualue[0])
-        #if len(ls)>0:
-            result[key]=sum(ls)/len(ls)
+        # if len(ls)>0:
+            result[key] = sum(ls) / len(ls)
         '''else:
             result[key]='-'''
     with open("./output/entropy.csv", 'w') as output_file:
         writer = csv.writer(output_file)
         for key, value in result.items():
-            row=[]
+            row = []
             row.append(key)
             row.append(value)
             writer.writerow(row)
     return result
 
-def get_ngram_entropy(filepath,ngram):
-    if type(ngram)==str:
-        ngram=tuple(ngram)
-    nrange=[2,len(ngram)+2]
-    entropy_dict=p_to_ent(filepath,nrange)
-    relevant_dict=entropy_dict[len(ngram)+1]
+
+def get_ngram_entropy(filepath, ngram):
+    if isinstance(ngram, str):
+        ngram = tuple(ngram)
+    nrange = [2, len(ngram) + 2]
+    entropy_dict = p_to_ent(filepath, nrange)
+    relevant_dict = entropy_dict[len(ngram) + 1]
     if ngram in relevant_dict.keys():
-        result=relevant_dict[ngram]
+        result = relevant_dict[ngram]
     else:
-        result='ngram_not_found'
+        result = 'ngram_not_found'
     return result
 
-def get_ngram_counts(filepath,ngram):
-    if type(ngram)==str:
-        ngram=tuple(ngram)
-    nrange=[2,len(ngram)+2]
-    probs_counts_dict=index.get_probs(filepath,nrange)
-    relevant_dict=probs_counts_dict[len(ngram)]
+
+def get_ngram_counts(filepath, ngram):
+    if isinstance(ngram, str):
+        ngram = tuple(ngram)
+    nrange = [2, len(ngram) + 2]
+    probs_counts_dict = index.get_probs(filepath, nrange)
+    relevant_dict = probs_counts_dict[len(ngram)]
     for key in relevant_dict.keys():
-        relevant_dict[key]=relevant_dict[key][1]
+        relevant_dict[key] = relevant_dict[key][1]
     if ngram in relevant_dict.keys():
-        result=relevant_dict[ngram]
+        result = relevant_dict[ngram]
     else:
-        result='ngram_not_found'
+        result = 'ngram_not_found'
     return result
 
-def batch(filepath,ngram_list,mode):
-    out_list=[]
-    if mode=='counts':
+
+def batch(filepath, ngram_list, mode):
+    out_list = []
+    if mode == 'counts':
         for ngram in ngram_list:
-            out_list.append(get_ngram_counts(filepath,ngram))
-    if mode=='entropy':
+            out_list.append(get_ngram_counts(filepath, ngram))
+    if mode == 'entropy':
         for ngram in ngram_list:
-            out_list.append(get_ngram_entropy(filepath,ngram))
+            out_list.append(get_ngram_entropy(filepath, ngram))
     return out_list
