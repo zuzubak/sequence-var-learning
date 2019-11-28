@@ -34,7 +34,7 @@ def get_data_list(filepath, case_sensitive=False):
 
 def get_data_string(filepath, date='all', case_sensitive=False):
     all_songs = ''
-    backwards = False
+    backwards = True
     with open(filepath) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0

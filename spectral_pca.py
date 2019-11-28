@@ -1,13 +1,14 @@
 
 
 def get_pca(
-    filepath='./data/pca_without_amplitude.csv',
+    filepath='./output/spectral_MK_PCA.csv',
     features=[
         'MeanFreq',
         'SpecDense',
         'Duration',
         'LoudEnt',
-        'SpecTempEnt']):
+        'SpecTempEnt'],
+    n_components=5):
     '''
     Code modified from https://towardsdatascience.com/pca-using-python-scikit-learn-e653f8989e60
     '''
@@ -27,7 +28,8 @@ def get_pca(
     x = StandardScaler().fit_transform(x)
 
     from sklearn.decomposition import PCA
-    pca = PCA(n_components=5)
+    pca = PCA(n_components=n_components)
+    print(pca)
     principalComponents = pca.fit_transform(x)
     principalDf = pd.DataFrame(
         data=principalComponents,
@@ -41,10 +43,9 @@ def get_pca(
     finalDf = pd.concat([principalDf, df[['target']]], axis=1)
     return finalDf
 
-
 def pca_plot(
-        filepath,
-        targets,
+        targets_list,
+        filepath='./data/pca_without_amplitude.csv',
         features=[
             'MeanFreq',
             'SpecDense',
@@ -53,24 +54,28 @@ def pca_plot(
             'SpecTempEnt',
         ]):
     import matplotlib.pyplot as plt
-    finalDf = get_pca(filepath, targets, features)
+    finalDf = get_pca(filepath,features)
+    print(finalDf)
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(1, 1, 1)
     ax.set_xlabel('Principal Component 1', fontsize=15)
     ax.set_ylabel('Principal Component 2', fontsize=15)
     ax.set_title('2 component PCA', fontsize=20)
     all_colours = ['r', 'g', 'b', 'y', 'c', 'm', 'k']
-    colours = all_colours[:len(targets)]
-    for target, colour in zip(targets, colours):
+    colours = all_colours[:len(targets_list)]
+    for target, colour in zip(targets_list, colours):
         indicesToKeep = finalDf['target'] == target
         ax.scatter(finalDf.loc[indicesToKeep,
-                               'principal component 1'],
-                   finalDf.loc[indicesToKeep,
-                               'principal component 2'],
-                   c=colour,
-                   s=50)
-    ax.legend(targets)
+                            'principal component 1'],
+                finalDf.loc[indicesToKeep,
+                            'principal component 2'],
+                c=colour,
+                s=50)
+    ax.legend(targets_list)
     ax.grid()
+    axes = plt.gca()
+    axes.set_xlim([-3,5])
+    axes.set_ylim([-3,5])
     plt.show()
 
 

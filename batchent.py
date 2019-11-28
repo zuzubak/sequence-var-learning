@@ -4,12 +4,12 @@ import csv
 import target_ngrams
 
 
-def make_info_graphs(directory, nrange, shuffle_mode=False):
+def make_info_graphs(directory='./data/BFs_logan/data', nrange=[2,7], shuffle_mode=False, min_count=1):
     LOL = []
     mode = 'w'
     for filename in os.listdir(directory):
         info_profile = entropy.avg_ent(
-            directory + '/' + filename, nrange, shuffle_mode)
+            directory + '/' + filename, nrange, shuffle_mode, min_count)
         row = [filename]
         for value in info_profile.values():
             row.append(value)

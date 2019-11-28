@@ -88,7 +88,7 @@ def p_to_ent(filepath, nrange):
     return (out_dict)
 
 
-def avg_ent(filepath, nrange, shuffle_mode=False):
+def avg_ent(filepath, nrange, shuffle_mode=False, min_count=1):
     '''
     For each n (Markov order) in the parameter nrange, averages entropy
     across all n-grams, estimating the entropy rate of the songs in filepath.
@@ -103,10 +103,10 @@ def avg_ent(filepath, nrange, shuffle_mode=False):
         n = key
         ls = []
         for jey, ualue in value.items():
-            # if ualue[1]>1:
-            for i in range(ualue[1]):
-                ls.append(ualue[0])
-        # if len(ls)>0:
+            if ualue[1]>min_count:
+                for i in range(ualue[1]):
+                    ls.append(ualue[0])
+        if len(ls)>0:
             result[key] = sum(ls) / len(ls)
         '''else:
             result[key]='-'''

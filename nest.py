@@ -6,6 +6,11 @@ import csv
 import index
 import numpy
 import previous_ent
+import dkl
+import pandas as pd
+import imp
+imp.reload(spectral_pca)
+imp.reload(dkl)
 
 meta_nest_dict = {
     'BrownBlue': ['br82bl42', 'br81bl41', 'tutor_bl5wh5'],
@@ -14,16 +19,24 @@ meta_nest_dict = {
     'OrangeBrown': ['or189br53', 'or188br52', 'tutor_bk'],
     'PurpleGreen': ['pu12gn8', 'tutor_si933'],
     'PurpleYellow': ['pu17ye34', 'pu14ye31', 'tutor_ye20gy31'],
-    'RedYellow': ['re38ye2', 're37ye1', 're10ye9', 'tutor_si935'],
+    'RedYellow': ['re38ye2', 're37ye1', 're10ye6', 'tutor_si935'],
     'WhiteOrange': ['wh96or142', 'wh100or80', 'tutor_si933(2)'],
-    'YellowBlack': ['ye84bk64', 'tutor_si936']
+    'YellowBlack': ['ye73bk73', 'ye84bk64', 'tutor_si936'],
+    'YellowGrey' : ['ye44gy44', 'tutor_or172br12']
 }
+
 
 directory = './data/BFs_logan/data/'
 prefix = 'fathers_and_sons_from_logan - '
 
 
-def branch_point_differences(n):
+prevalence_dict = {}
+prevalence_data = pd.read_csv('./data/Data4Malcolm - main.csv')
+for syllable,prevalence in zip(prevalence_data['TutorID_Syllable'],prevalence_data['perTut']):
+    prevalence_dict[syllable] = prevalence
+
+
+def branch_point_differences(n,mode):
     out_dict = {}
     syllables_dict = {}
     for nest, birds_list in meta_nest_dict.items():
@@ -46,30 +59,33 @@ def branch_point_differences(n):
                 value for value in bird1_branchpoints if value in bird2_branchpoints]
             branchpoints_dict = {}
             for branchpoint in branchpoints_to_analyze:
+                differences_dict={}
                 count1 = distrib_1[branchpoint]['count']
                 count2 = distrib_2[branchpoint]['count']
-                mean_count = sum([count1, count2]) / 2
-                differences_dict = {}
-                for transition in distrib_1[branchpoint]['transitions'].keys():
-                    if transition in distrib_2[branchpoint]['transitions'].keys(
-                    ):
-                        difference = abs(
-                            distrib_1[branchpoint]['transitions'][transition] -
-                            distrib_2[branchpoint]['transitions'][transition])
-                    else:
-                        difference = abs(
-                            distrib_1[branchpoint]['transitions'][transition])
-                    differences_dict[transition] = difference
-                for transition in distrib_2[branchpoint]['transitions'].keys():
-                    if transition not in distrib_1[branchpoint]['transitions'].keys(
-                    ):
-                        difference = abs(
-                            distrib_2[branchpoint]['transitions'][transition])
-                    differences_dict[transition] = difference
+                mean_count = sum([count1,count2])/2
+                transitions_to_analyze = list(distrib_1[branchpoint]['transitions'].keys())+list(distrib_2[branchpoint]['transitions'].keys())
+                for transition in transitions_to_analyze:
+                        if transition not in distrib_1[branchpoint]['transitions'].keys():
+                            bird1_value = 0.00000001
+                        else:
+                            bird1_value = distrib_1[branchpoint]['transitions'][transition]
+                        if transition not in distrib_2[branchpoint]['transitions'].keys():
+                            bird2_value = 0.00000001
+                        else:
+                            bird2_value = distrib_2[branchpoint]['transitions'][transition]
+                        if mode == 'euclidean':
+                            difference = abs(bird1_value-bird2_value)
+                        if mode == 'dkl':
+                            difference = bird1_value * numpy.log(bird1_value/bird2_value)
+                        differences_dict[transition] = difference
                 divergence = sum(differences_dict.values()) / \
                     len(differences_dict.values())
                 branchpoints_dict[branchpoint] = {
-                    'mean_count': mean_count, 'divergence': divergence}
+                    'tutor_count': count1, 
+                    'pupil_count': count2, 
+                    'mean_count' : mean_count, 
+                    'divergence': divergence}
+            divergences = []
             divergences = []
             counts = []
             for branchpoint, subdict in branchpoints_dict.items():
@@ -101,14 +117,14 @@ def branch_point_differences(n):
         writer.writerow(['Nest', 'BirdID', 'Syllable', 'Divergence'])
         for row in syllables_matrix_version:
             writer.writerow(row)
-    return (matrix_version, syllables_dict)
+    return [matrix_version,syllables_dict]
 
 
 def compare(n_for_previous_ent=2, ent_data=None):
     pca_data = spectral_pca.get_pca_matrix()
     if ent_data is None:
         ent_data = batchent.batch_syl_info_and_feats()
-    divergence_data = branch_point_differences(2)[1]
+    divergence_data = branch_point_differences(2,'euclidean')[1]
     previous_ent_data = previous_ent.batch_pe(n=n_for_previous_ent)
     out_dict = {}
     for nest, birds_list in meta_nest_dict.items():
@@ -122,6 +138,8 @@ def compare(n_for_previous_ent=2, ent_data=None):
                 pupil_syllables = pca_data[pupil_ID].keys()
                 retained_syllables = [
                     value for value in tutor_syllables if value in pupil_syllables]
+                dropped_syllables = [
+                    value for value in tutor_syllables if value not in pupil_syllables]
                 for syllable in retained_syllables:
                     for row in ent_data:
                         if row[0] == pupil_ID and row[1] == syllable:
@@ -166,6 +184,107 @@ def compare(n_for_previous_ent=2, ent_data=None):
                          'PupilEntropy',
                          'SpectralDistance',
                          'Divergence',
+                         'TutorPreviousEnt',
+                         'PupilPreviousEnt',
+                         'MeanFreq',
+                         'SpecDense',
+                         'Duration',
+                         'LoudEnt',
+                         'SpecTempEnt',
+                         'meanLoud'])
+        for row in matrix_version:
+            writer.writerow(row)
+    return matrix_version
+
+def tutor_compare(n_for_previous_ent=2, ent_data=None):
+    pca_data = spectral_pca.get_pca_matrix()
+    if ent_data is None:
+        ent_data = batchent.batch_syl_info_and_feats()
+    divergence_data = branch_point_differences(2,'euclidean')[1]
+    dkl_data = branch_point_differences(2,'dkl')[1]
+    previous_ent_data = previous_ent.batch_pe(n=n_for_previous_ent)
+    out_dict = {}
+    for nest, birds_list in meta_nest_dict.items():
+        nest_dict = {}
+        pupil_IDs = birds_list[:-1]
+        tutor_ID = birds_list[-1]
+        tutor_syllables = pca_data[tutor_ID].keys()
+        for pupil_ID in pupil_IDs:
+            pupil_dict = {}
+            tutor_syllables = pca_data[tutor_ID].keys()
+            pupil_syllables = pca_data[pupil_ID].keys()
+            retained_syllables = [
+                value for value in tutor_syllables if value in pupil_syllables]
+            dropped_syllables = [
+                value for value in tutor_syllables if value not in pupil_syllables]
+            for syllable in tutor_syllables:
+                try:
+                    prevalence = prevalence_dict[tutor_ID+'_'+syllable]
+                except:
+                    prevalence = '-'
+                pupil_entropy=''
+                for row in ent_data:
+                    if row[0] == pupil_ID and row[1] == syllable:
+                        pupil_entropy = row[2]
+                    if row[0] == tutor_ID and row[1] == syllable:
+                        tutor_entropy = row[2]
+                        tutor_spectral_data = row[-6:]
+                spectral_distance=''
+                try:
+                    tutor_pca = pca_data[tutor_ID][syllable]
+                    pupil_pca = pca_data[pupil_ID][syllable]
+                    spectral_distance = distance.euclidean(
+                        tuple(tutor_pca), tuple(pupil_pca))
+                except:
+                    pass
+                divergence=''
+                try:
+                    divergence = divergence_data[nest][pupil_ID][tuple(
+                        syllable)]['divergence']
+                    dkl_value = dkl_data[nest][pupil_ID][tuple(
+                        syllable)]['divergence']
+                except:
+                    pass
+                try:
+                    tutor_previous_ent = previous_ent_data[tutor_ID][syllable]
+                    pupil_previous_ent = ''
+                except:
+                    pass
+                try:
+                    pupil_previous_ent = previous_ent_data[pupil_ID][syllable]
+                except:
+                    pass
+                pupil_dict[syllable] = [
+                    prevalence,
+                    tutor_entropy,
+                    pupil_entropy,
+                    spectral_distance,
+                    divergence,
+                    dkl_value,
+                    tutor_previous_ent,
+                    pupil_previous_ent]
+                for feature in tutor_spectral_data:
+                    pupil_dict[syllable].append(feature)
+            print(pupil_dict)
+            nest_dict[pupil_ID] = pupil_dict
+        out_dict[nest] = nest_dict
+    print(out_dict)
+    matrix_version = []
+    for nest, nestdict in out_dict.items():
+        for bird, birddict in nestdict.items():
+            for syl, syllist in birddict.items():
+                matrix_version.append([nest, bird, syl] + syllist)
+    with open("./output/nest_learning.csv", 'w') as output_file:
+        writer = csv.writer(output_file)
+        writer.writerow(['Nest',
+                         'BirdID',
+                         'Syllable',
+                         'Prevalence',
+                         'TutorEntropy',
+                         'PupilEntropy',
+                         'SpectralDistance',
+                         'Divergence',
+                         'DKL',
                          'TutorPreviousEnt',
                          'PupilPreviousEnt',
                          'MeanFreq',
