@@ -8,6 +8,7 @@ def get_pca(
         'Duration',
         'LoudEnt',
         'SpecTempEnt'],
+    mode = 'PCA',
     n_components=5):
     '''
     Code modified from https://towardsdatascience.com/pca-using-python-scikit-learn-e653f8989e60
@@ -29,7 +30,6 @@ def get_pca(
 
     from sklearn.decomposition import PCA
     pca = PCA(n_components=n_components)
-    print(pca)
     principalComponents = pca.fit_transform(x)
     principalDf = pd.DataFrame(
         data=principalComponents,
@@ -41,7 +41,11 @@ def get_pca(
             'principal component 5'])
 
     finalDf = pd.concat([principalDf, df[['target']]], axis=1)
-    return finalDf
+    print(pca.explained_variance_ratio_)
+    if mode == 'z-scores':
+        return x
+    else:
+        return finalDf
 
 def pca_plot(
         targets_list,

@@ -1,6 +1,7 @@
 import entropy
 import csv
 import random
+import os
 
 
 def print_ent_estimates(fp, nrange, shuffle=False):
@@ -33,4 +34,18 @@ def print_ent_estimates(fp, nrange, shuffle=False):
         with open('./output/samplesize.csv', mode) as output_file:
             writer = csv.writer(output_file)
             writer.writerow(out_row)
+        mode = 'a'
+
+def info_graphs(directory='./data/BFs_logan/data', nrange=[2,7], shuffle_mode=False, count_lst=[0,5,10], backwards=False):
+    LOL = []
+    mode = 'w'
+    for filename in os.listdir(directory):
+        info_profile = entropy.avg_ent(
+            directory + '/' + filename, nrange, shuffle_mode, min_count, backwards = backwards)
+        row = [filename]
+        for value in info_profile.values():
+            row.append(value)
+        with open("./output/batchent.csv", mode) as output_file:
+            writer = csv.writer(output_file)
+            writer.writerow(row)
         mode = 'a'

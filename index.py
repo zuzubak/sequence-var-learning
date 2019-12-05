@@ -32,9 +32,8 @@ def get_data_list(filepath, case_sensitive=False):
     return songs
 
 
-def get_data_string(filepath, date='all', case_sensitive=False):
+def get_data_string(filepath, date='all', case_sensitive=False, backwards = False):
     all_songs = ''
-    backwards = True
     with open(filepath) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
@@ -70,8 +69,8 @@ def ncounts(string, n):
     return Counter(ngrams(token(" ".join(string)), n))
 
 
-def get_ngrams(filepath, n):
-    songs_string = get_data_string(filepath)
+def get_ngrams(filepath, n, backwards=False):
+    songs_string = get_data_string(filepath,backwards=backwards)
     return ncounts(songs_string, n)
 
 
@@ -96,13 +95,13 @@ def save_to_file(data_dict, filepath, n, name='probabilities'):
             writer.writerow(row)
 
 
-def get_probs(filepath, nrange):
+def get_probs(filepath, nrange, backwards=False):
     metaresult = {}
     nlist = []
     for i in range(nrange[0], nrange[1]):
         nlist.append(i)
     for n in nlist:
-        nGrams = get_ngrams(filepath, n)
+        nGrams = get_ngrams(filepath, n, backwards=backwards)
         result_with_slashes = {}
         if n == 1:
             prior = sum(nGrams.values())

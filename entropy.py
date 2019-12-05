@@ -12,14 +12,14 @@ def calculate_bias(filepath, nrange):
     pass
 
 
-def gather_branchpoints(filepath, nrange):
+def gather_branchpoints(filepath, nrange, backwards=False):
     '''
     Compiles the transition probabilities from index.get_probs into probability distributions
     for branch points (prefixes). For each n in the output dict, this set of probability distribution
     is found at [beginnings_dict], while the other entry ['total_ngram_count'] stores the total number
     of ngram tokens for that n.
     '''
-    idct = index.get_probs(filepath, nrange)
+    idct = index.get_probs(filepath, nrange, backwards=backwards)
     out_dict = {}
     for n in idct.keys():
         ngram_dict = idct[n]
@@ -59,13 +59,13 @@ def branchpoints(filepath, nrange):
     return out_dict
 
 
-def p_to_ent(filepath, nrange):
+def p_to_ent(filepath, nrange, backwards=False):
     '''
     Calculates probability distributions for the songs in filepath for the nth order MMs included in nrange,
     then using each nth-order prob distr, calculates the entropy at each (n-1)gram.
     For hapax legomena, returns an H of 0.
     '''
-    idct = gather_branchpoints(filepath, nrange)
+    idct = gather_branchpoints(filepath, nrange, backwards=backwards)
     out_dict = {}
     for n, n_dict in idct.items():
         beginnings_dict = n_dict['beginnings_dict']
@@ -88,7 +88,7 @@ def p_to_ent(filepath, nrange):
     return (out_dict)
 
 
-def avg_ent(filepath, nrange, shuffle_mode=False, min_count=1):
+def avg_ent(filepath, nrange, shuffle_mode=False, min_count=1, backwards=False):
     '''
     For each n (Markov order) in the parameter nrange, averages entropy
     across all n-grams, estimating the entropy rate of the songs in filepath.
@@ -96,7 +96,7 @@ def avg_ent(filepath, nrange, shuffle_mode=False, min_count=1):
     if shuffle_mode:
         shuffle.shuffle(filepath)
         filepath = './output/shuffle.csv'
-    ndct = p_to_ent(filepath, nrange)
+    ndct = p_to_ent(filepath, nrange, backwards=backwards)
     # print(ndct)
     result = {}
     for key, value in ndct.items():
@@ -120,11 +120,11 @@ def avg_ent(filepath, nrange, shuffle_mode=False, min_count=1):
     return result
 
 
-def get_ngram_entropy(filepath, ngram):
+def get_ngram_entropy(filepath, ngram,backwards=False):
     if isinstance(ngram, str):
         ngram = tuple(ngram)
     nrange = [2, len(ngram) + 2]
-    entropy_dict = p_to_ent(filepath, nrange)
+    entropy_dict = p_to_ent(filepath, nrange,backwards=backwards)
     relevant_dict = entropy_dict[len(ngram) + 1]
     if ngram in relevant_dict.keys():
         result = relevant_dict[ngram]

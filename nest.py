@@ -9,6 +9,7 @@ import previous_ent
 import dkl
 import pandas as pd
 import imp
+import math
 imp.reload(spectral_pca)
 imp.reload(dkl)
 
@@ -31,9 +32,14 @@ prefix = 'fathers_and_sons_from_logan - '
 
 
 prevalence_dict = {}
+category_dict = {}
 prevalence_data = pd.read_csv('./data/Data4Malcolm - main.csv')
-for syllable,prevalence in zip(prevalence_data['TutorID_Syllable'],prevalence_data['perTut']):
-    prevalence_dict[syllable] = prevalence
+for tutor_syllable,pupil_syllable,prevalence,category in zip(prevalence_data['TutorID_Syllable'],
+        prevalence_data['PupilID_Syllable'],
+        prevalence_data['perTut'],
+        prevalence_data['Category']):
+    prevalence_dict[tutor_syllable] = prevalence
+    category_dict[pupil_syllable] = category
 
 
 def branch_point_differences(n,mode):
@@ -76,7 +82,9 @@ def branch_point_differences(n,mode):
                         if mode == 'euclidean':
                             difference = abs(bird1_value-bird2_value)
                         if mode == 'dkl':
-                            difference = bird1_value * numpy.log(bird1_value/bird2_value)
+                            difference = bird1_value * math.log2(bird1_value/bird2_value)
+                        if mode == 'log':
+                            difference = abs(math.log2(bird1_value)-math.log2(bird2_value))
                         differences_dict[transition] = difference
                 divergence = sum(differences_dict.values()) / \
                     len(differences_dict.values())
@@ -196,12 +204,15 @@ def compare(n_for_previous_ent=2, ent_data=None):
             writer.writerow(row)
     return matrix_version
 
-def tutor_compare(n_for_previous_ent=2, ent_data=None):
+def tutor_compare(n_for_previous_ent=2, forwards_ent_data=None,backwards_ent_data=None):
     pca_data = spectral_pca.get_pca_matrix()
-    if ent_data is None:
-        ent_data = batchent.batch_syl_info_and_feats()
+    if forwards_ent_data is None:
+        forwards_ent_data = batchent.batch_syl_info_and_feats(backwards=False)
+    if backwards_ent_data is None:
+        backwards_ent_data = batchent.batch_syl_info_and_feats(backwards=True)
     divergence_data = branch_point_differences(2,'euclidean')[1]
     dkl_data = branch_point_differences(2,'dkl')[1]
+    log_data = branch_point_differences(2,'log')[1]
     previous_ent_data = previous_ent.batch_pe(n=n_for_previous_ent)
     out_dict = {}
     for nest, birds_list in meta_nest_dict.items():
@@ -220,16 +231,23 @@ def tutor_compare(n_for_previous_ent=2, ent_data=None):
             for syllable in tutor_syllables:
                 try:
                     prevalence = prevalence_dict[tutor_ID+'_'+syllable]
+                    category = category_dict[pupil_ID+'_'+syllable]
                 except:
-                    prevalence = '-'
+                    prevalence = ''
+                    category = ''
                 pupil_entropy=''
-                for row in ent_data:
-                    if row[0] == pupil_ID and row[1] == syllable:
-                        pupil_entropy = row[2]
-                    if row[0] == tutor_ID and row[1] == syllable:
-                        tutor_entropy = row[2]
-                        tutor_spectral_data = row[-6:]
-                spectral_distance=''
+                direction_dict={'forwards':{'tutor':'','pupil':''},'backwards':{'tutor':'','pupil':''}}
+                for direction,direction_data in zip(['forwards','backwards'],[forwards_ent_data,backwards_ent_data]):
+                    for row in direction_data:
+                        if row[0] == pupil_ID and row[1] == syllable:
+                            direction_dict[direction]['pupil'] = row[2]
+                        if row[0] == tutor_ID and row[1] == syllable:
+                            direction_dict[direction]['tutor'] = row[2]
+                            tutor_spectral_data = row[-6:]
+                spectral_distance = ''
+                divergence=''
+                dkl_value = ''
+                log_value = ''
                 try:
                     tutor_pca = pca_data[tutor_ID][syllable]
                     pupil_pca = pca_data[pupil_ID][syllable]
@@ -237,14 +255,16 @@ def tutor_compare(n_for_previous_ent=2, ent_data=None):
                         tuple(tutor_pca), tuple(pupil_pca))
                 except:
                     pass
-                divergence=''
-                try:
-                    divergence = divergence_data[nest][pupil_ID][tuple(
-                        syllable)]['divergence']
-                    dkl_value = dkl_data[nest][pupil_ID][tuple(
-                        syllable)]['divergence']
-                except:
-                    pass
+                if category == 'Retained':
+                    try:
+                        divergence = divergence_data[nest][pupil_ID][tuple(
+                            syllable)]['divergence']
+                        dkl_value = dkl_data[nest][pupil_ID][tuple(
+                            syllable)]['divergence']
+                        log_value = log_data[nest][pupil_ID][tuple(
+                            syllable)]['divergence']
+                    except:
+                        pass
                 try:
                     tutor_previous_ent = previous_ent_data[tutor_ID][syllable]
                     pupil_previous_ent = ''
@@ -256,11 +276,15 @@ def tutor_compare(n_for_previous_ent=2, ent_data=None):
                     pass
                 pupil_dict[syllable] = [
                     prevalence,
-                    tutor_entropy,
-                    pupil_entropy,
+                    category,
+                    direction_dict['forwards']['tutor'],
+                    direction_dict['forwards']['pupil'],
+                    direction_dict['backwards']['tutor'],
+                    direction_dict['backwards']['pupil'],
                     spectral_distance,
                     divergence,
                     dkl_value,
+                    log_value,
                     tutor_previous_ent,
                     pupil_previous_ent]
                 for feature in tutor_spectral_data:
@@ -280,11 +304,15 @@ def tutor_compare(n_for_previous_ent=2, ent_data=None):
                          'BirdID',
                          'Syllable',
                          'Prevalence',
-                         'TutorEntropy',
-                         'PupilEntropy',
+                         'Category',
+                         'TutorForwardsEntropy',
+                         'PupilForwardsEntropy',
+                         'TutorBackwardsEntropy',
+                         'PupilBackwardsEntropy',
                          'SpectralDistance',
-                         'Divergence',
+                         'EuclideanDistance',
                          'DKL',
+                         'LogDistance',
                          'TutorPreviousEnt',
                          'PupilPreviousEnt',
                          'MeanFreq',
