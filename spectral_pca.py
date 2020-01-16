@@ -1,8 +1,8 @@
 
 
 def get_pca(
-    filepath='./output/spectral_MK_PCA.csv',
-    features=[
+    filepath = './output/spectral_MK_PCA.csv',
+    features = [
         'MeanFreq',
         'SpecDense',
         'Duration',
@@ -20,6 +20,7 @@ def get_pca(
     import pandas as pd
     # load dataset into Pandas DataFrame
     df = pd.read_csv(filepath, names=features_with_target)
+    print(df)
     from sklearn.preprocessing import StandardScaler
     # Separating out the features
     x = df.loc[:, features].values
@@ -39,7 +40,6 @@ def get_pca(
             'principal component 3',
             'principal component 4',
             'principal component 5'])
-
     finalDf = pd.concat([principalDf, df[['target']]], axis=1)
     print(pca.explained_variance_ratio_)
     if mode == 'z-scores':
@@ -56,6 +56,7 @@ def pca_plot(
             'Duration',
             'LoudEnt',
             'SpecTempEnt',
+            'Loudness'
         ]):
     import matplotlib.pyplot as plt
     finalDf = get_pca(filepath,features)
@@ -78,8 +79,8 @@ def pca_plot(
     ax.legend(targets_list)
     ax.grid()
     axes = plt.gca()
-    axes.set_xlim([-3,5])
-    axes.set_ylim([-3,5])
+    axes.set_xlim([-3,3])
+    axes.set_ylim([-3,3])
     plt.show()
 
 
@@ -95,4 +96,15 @@ def get_pca_matrix():
         if birdID not in out_dict.keys():
             out_dict[birdID] = {}
         out_dict[birdID][syllable] = row
+    return out_dict
+
+def tokens_by_type(filepath='/Users/zuzubak/projects/bf-ngrams/output/PCA_tokens.csv'):
+    previous_result = get_pca(filepath=filepath)
+    out_dict = {}
+    for index in previous_result.index:
+        row = [previous_result['principal component 1'][index], previous_result['principal component 2'][index]]
+        if previous_result['target'][index] not in out_dict.keys():
+            out_dict[previous_result['target'][index]] = []
+        else:
+            out_dict[previous_result['target'][index]].append(row)
     return out_dict

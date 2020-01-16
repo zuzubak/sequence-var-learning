@@ -3,6 +3,8 @@ import entropy
 import csv
 import by_date
 import spectral_feats
+import imp
+imp.reload(entropy)
 
 
 def get_ngram_spectral_feats(filepath, ngram, bird_ID):
@@ -27,7 +29,7 @@ def get_ngram_spectral_feats(filepath, ngram, bird_ID):
     return means_dict
 
 
-def ngram_info(fp, n, target_syllable='all', min_count=5, probs=False, backwards=False):
+def ngram_info(fp, n, target_syllable='all', min_count=5, probs=False, backwards=False, ExpectedProbability=False):
     out_list = []
     ngrams = index.get_probs(fp, [n, n + 1], backwards)[n]
     target_ngrams = []
@@ -40,8 +42,8 @@ def ngram_info(fp, n, target_syllable='all', min_count=5, probs=False, backwards
                 target_ngrams.append(ngram_string)
     for ngram in target_ngrams:
         minilist = [ngram[:-1]]
-        minilist.append(entropy.get_ngram_entropy(fp, ngram[:-1],backwards=backwards)[0])
-        minilist.append(entropy.get_ngram_entropy(fp, ngram[:-1],backwards=backwards)[1])
+        minilist.append(entropy.get_ngram_entropy(fp, ngram[:-1],backwards = backwards, ExpectedProbability = ExpectedProbability)[0])
+        minilist.append(entropy.get_ngram_entropy(fp, ngram[:-1],backwards = backwards, ExpectedProbability = ExpectedProbability)[1])
         count = ngrams[tuple(ngram)][1]
         prob = ngrams[tuple(ngram)][0]
         if probs:
@@ -57,8 +59,8 @@ def ngram_info(fp, n, target_syllable='all', min_count=5, probs=False, backwards
     return out_list
 
 
-def info_and_feats(songs_fp, n, spectral_fp, bird_ID, backwards=False):
-    info = ngram_info(songs_fp, n, backwards=backwards)
+def info_and_feats(songs_fp, n, spectral_fp, bird_ID, backwards=False, ExpectedProbability=False):
+    info = ngram_info(songs_fp, n, backwards = backwards, ExpectedProbability = ExpectedProbability)
     out_list = []
     for minilist in info:
         ngram = minilist[0]

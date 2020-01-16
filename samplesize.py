@@ -2,9 +2,10 @@ import entropy
 import csv
 import random
 import os
+import re
 
 
-def print_ent_estimates(fp, nrange, shuffle=False):
+def print_ent_estimates(fp, nrange, shuffle=False,birdID=None):
     '''
     Removes all but one song string (row) from the input file fp,
     Then adds the strings back in one at a time, re-estimating nth-order
@@ -13,6 +14,10 @@ def print_ent_estimates(fp, nrange, shuffle=False):
     estimates for each sample size.
     '''
     mode = 'w'
+    if birdID == None:
+        out_fp = './output/samplesize.csv'
+    else:
+        out_fp = "./output/samplesize/%s.csv" %birdID
     with open(fp) as f:
         reader = csv.reader(f, delimiter="\n")
         lines_unformatted = list(reader)
@@ -31,21 +36,20 @@ def print_ent_estimates(fp, nrange, shuffle=False):
         out_row = [i + 1]
         for value in ent.values():
             out_row.append(value)
-        with open('./output/samplesize.csv', mode) as output_file:
-            writer = csv.writer(output_file)
-            writer.writerow(out_row)
+        if i==0 or i%10==9:
+            with open(out_fp, mode) as output_file:
+                writer = csv.writer(output_file)
+                writer.writerow(out_row)
         mode = 'a'
 
-def info_graphs(directory='./data/BFs_logan/data', nrange=[2,7], shuffle_mode=False, count_lst=[0,5,10], backwards=False):
-    LOL = []
-    mode = 'w'
+def batch(directory='./data/BFs_logan/data', nrange=[2,7]):
     for filename in os.listdir(directory):
-        info_profile = entropy.avg_ent(
-            directory + '/' + filename, nrange, shuffle_mode, min_count, backwards = backwards)
-        row = [filename]
-        for value in info_profile.values():
-            row.append(value)
-        with open("./output/batchent.csv", mode) as output_file:
-            writer = csv.writer(output_file)
-            writer.writerow(row)
-        mode = 'a'
+        birdID_csv = re.sub('fathers_and_sons_from_logan - ','',filename)
+        birdID = re.sub('.csv','',birdID_csv)
+        print(birdID)
+        print_ent_estimates(directory+'/'+filename,nrange,birdID=birdID)
+
+def asymptotes(directory='./output/samplesize'):
+    for filename in os.listdir(directory):
+        rows=list(open(directory+'/'+filename))
+

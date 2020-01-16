@@ -2,14 +2,16 @@ import entropy
 import os
 import csv
 import target_ngrams
+import imp
+imp.reload(target_ngrams)
 
 
-def make_info_graphs(directory='./data/BFs_logan/data', nrange=[2,7], shuffle_mode=False, min_count=1, backwards=False):
+def make_info_graphs(directory='./data/BFs_logan/data', nrange=[2,7], shuffle_mode=False, min_count=1, backwards=False, ExpectedProbability=False):
     LOL = []
     mode = 'w'
     for filename in os.listdir(directory):
         info_profile = entropy.avg_ent(
-            directory + '/' + filename, nrange, shuffle_mode, min_count, backwards = backwards)
+            directory + '/' + filename, nrange, shuffle_mode, min_count, backwards = backwards, ExpectedProbability = ExpectedProbability)
         row = [filename]
         for value in info_profile.values():
             row.append(value)
@@ -24,7 +26,7 @@ def batch_syl_info_and_feats(
         n=2,
         spectral_fp='./data/spectral.csv',
         prefix='fathers_and_sons_from_logan - ',
-        backwards=False):
+        backwards=False, ExpectedProbability=False):
     LOL = []
     mode = 'w'
     for filename in os.listdir(directory):
@@ -36,7 +38,7 @@ def batch_syl_info_and_feats(
         for char in fn_listchar:
             bird_ID += char
         tn_result = target_ngrams.info_and_feats(
-            directory + '/' + filename, n, spectral_fp, bird_ID, backwards=backwards)
+            directory + '/' + filename, n, spectral_fp, bird_ID, backwards = backwards, ExpectedProbability = ExpectedProbability)
         for row in tn_result:
             row.insert(0, bird_ID)
             with open("./output/batch_syl_info_and_feats.csv", mode) as output_file:

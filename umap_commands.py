@@ -4,7 +4,6 @@ from sklearn.decomposition import PCA
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-%matplotlib inline
 
 # Dimension reduction and clustering libraries
 import umap

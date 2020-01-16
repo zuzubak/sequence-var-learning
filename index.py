@@ -70,7 +70,7 @@ def ncounts(string, n):
 
 
 def get_ngrams(filepath, n, backwards=False):
-    songs_string = get_data_string(filepath,backwards=backwards)
+    songs_string = get_data_string(filepath,backwards = backwards)
     return ncounts(songs_string, n)
 
 
@@ -95,13 +95,13 @@ def save_to_file(data_dict, filepath, n, name='probabilities'):
             writer.writerow(row)
 
 
-def get_probs(filepath, nrange, backwards=False):
+def get_probs(filepath, nrange, backwards=False,):
     metaresult = {}
     nlist = []
     for i in range(nrange[0], nrange[1]):
         nlist.append(i)
     for n in nlist:
-        nGrams = get_ngrams(filepath, n, backwards=backwards)
+        nGrams = get_ngrams(filepath, n, backwards = backwards)
         result_with_slashes = {}
         if n == 1:
             prior = sum(nGrams.values())

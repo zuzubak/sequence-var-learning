@@ -10,8 +10,11 @@ import dkl
 import pandas as pd
 import imp
 import math
+import spread
+import pickle_commands as pc
 imp.reload(spectral_pca)
 imp.reload(dkl)
+imp.reload(batchent)
 
 meta_nest_dict = {
     'BrownBlue': ['br82bl42', 'br81bl41', 'tutor_bl5wh5'],
@@ -61,14 +64,18 @@ def branch_point_differences(n,mode):
                 bird1_branchpoints.append(branchpoint_1)
             for branchpoint_2 in distrib_2.keys():
                 bird2_branchpoints.append(branchpoint_2)
-            branchpoints_to_analyze = [
-                value for value in bird1_branchpoints if value in bird2_branchpoints]
+            branchpoints_to_analyze = [value for value in bird1_branchpoints if value in bird2_branchpoints]
             branchpoints_dict = {}
             for branchpoint in branchpoints_to_analyze:
                 differences_dict={}
-                count1 = distrib_1[branchpoint]['count']
-                count2 = distrib_2[branchpoint]['count']
-                mean_count = sum([count1,count2])/2
+                if branchpoint in distrib_1.values():
+                    count1 = distrib_1[branchpoint]['count']
+                else:
+                    count1 = 0
+                if branchpoint in distrib_2.values():
+                    count2 = distrib_1[branchpoint]['count']
+                else:
+                    count2 = 0
                 transitions_to_analyze = list(distrib_1[branchpoint]['transitions'].keys())+list(distrib_2[branchpoint]['transitions'].keys())
                 for transition in transitions_to_analyze:
                         if transition not in distrib_1[branchpoint]['transitions'].keys():
@@ -86,24 +93,16 @@ def branch_point_differences(n,mode):
                         if mode == 'log':
                             difference = abs(math.log2(bird1_value)-math.log2(bird2_value))
                         differences_dict[transition] = difference
-                divergence = sum(differences_dict.values()) / \
-                    len(differences_dict.values())
+                divergence = sum(differences_dict.values())
                 branchpoints_dict[branchpoint] = {
                     'tutor_count': count1, 
                     'pupil_count': count2, 
-                    'mean_count' : mean_count, 
                     'divergence': divergence}
-            divergences = []
             divergences = []
             counts = []
             for branchpoint, subdict in branchpoints_dict.items():
                 divergences.append(subdict['divergence'])
-                counts.append(subdict['mean_count'])
             shared_branchpoints = len(branchpoints_dict.keys())
-            average_divergence = numpy.average(divergences, weights=counts)
-            pupil_result = average_divergence
-            nest_syllable_dict[pupil_ID] = branchpoints_dict
-            nest_dict[pupil_ID] = pupil_result
         out_dict[nest] = nest_dict
         syllables_dict[nest] = nest_syllable_dict
     matrix_version = []
@@ -174,10 +173,8 @@ def compare(n_for_previous_ent=2, ent_data=None):
                         pupil_dict[syllable].append(feature)
             except BaseException:
                 pass
-            print(pupil_dict)
             nest_dict[pupil_ID] = pupil_dict
         out_dict[nest] = nest_dict
-    print(out_dict)
     matrix_version = []
     for nest, nestdict in out_dict.items():
         for bird, birddict in nestdict.items():
@@ -204,12 +201,13 @@ def compare(n_for_previous_ent=2, ent_data=None):
             writer.writerow(row)
     return matrix_version
 
-def tutor_compare(n_for_previous_ent=2, forwards_ent_data=None,backwards_ent_data=None):
+def tutor_compare(n_for_previous_ent=2):
     pca_data = spectral_pca.get_pca_matrix()
-    if forwards_ent_data is None:
-        forwards_ent_data = batchent.batch_syl_info_and_feats(backwards=False)
-    if backwards_ent_data is None:
-        backwards_ent_data = batchent.batch_syl_info_and_feats(backwards=True)
+    token_pca_data = spectral_pca.tokens_by_type()
+    forwards_ent_data = pc.depickle('forwards_ent_data')
+    backwards_ent_data = pc.depickle('backwards_ent_data')
+    fEP = pc.depickle('fEP')
+    bEP = pc.depickle('bEP')
     divergence_data = branch_point_differences(2,'euclidean')[1]
     dkl_data = branch_point_differences(2,'dkl')[1]
     log_data = branch_point_differences(2,'log')[1]
@@ -236,8 +234,8 @@ def tutor_compare(n_for_previous_ent=2, forwards_ent_data=None,backwards_ent_dat
                     prevalence = ''
                     category = ''
                 pupil_entropy=''
-                direction_dict={'forwards':{'tutor':'','pupil':''},'backwards':{'tutor':'','pupil':''}}
-                for direction,direction_data in zip(['forwards','backwards'],[forwards_ent_data,backwards_ent_data]):
+                direction_dict={'forwards':{'tutor':'','pupil':''},'backwards':{'tutor':'','pupil':''},'fEP':{'tutor':'','pupil':''},'bEP':{'tutor':'','pupil':''}}
+                for direction,direction_data in zip(['forwards','backwards','fEP','bEP'],[forwards_ent_data,backwards_ent_data,fEP,bEP]):
                     for row in direction_data:
                         if row[0] == pupil_ID and row[1] == syllable:
                             direction_dict[direction]['pupil'] = row[2]
@@ -248,6 +246,11 @@ def tutor_compare(n_for_previous_ent=2, forwards_ent_data=None,backwards_ent_dat
                 divergence=''
                 dkl_value = ''
                 log_value = ''
+                try:
+                    tutor_spread = spread.spread(token_pca_data[tutor_ID + '_' + syllable])
+                    pupil_spread = spread.spread(token_pca_data[pupil_ID + '_' + syllable])
+                except:
+                    pass
                 try:
                     tutor_pca = pca_data[tutor_ID][syllable]
                     pupil_pca = pca_data[pupil_ID][syllable]
@@ -281,7 +284,13 @@ def tutor_compare(n_for_previous_ent=2, forwards_ent_data=None,backwards_ent_dat
                     direction_dict['forwards']['pupil'],
                     direction_dict['backwards']['tutor'],
                     direction_dict['backwards']['pupil'],
+                    direction_dict['fEP']['tutor'],
+                    direction_dict['fEP']['pupil'],
+                    direction_dict['bEP']['tutor'],
+                    direction_dict['bEP']['pupil'],
                     spectral_distance,
+                    tutor_spread,
+                    pupil_spread,
                     divergence,
                     dkl_value,
                     log_value,
@@ -289,10 +298,8 @@ def tutor_compare(n_for_previous_ent=2, forwards_ent_data=None,backwards_ent_dat
                     pupil_previous_ent]
                 for feature in tutor_spectral_data:
                     pupil_dict[syllable].append(feature)
-            print(pupil_dict)
             nest_dict[pupil_ID] = pupil_dict
         out_dict[nest] = nest_dict
-    print(out_dict)
     matrix_version = []
     for nest, nestdict in out_dict.items():
         for bird, birddict in nestdict.items():
@@ -309,7 +316,13 @@ def tutor_compare(n_for_previous_ent=2, forwards_ent_data=None,backwards_ent_dat
                          'PupilForwardsEntropy',
                          'TutorBackwardsEntropy',
                          'PupilBackwardsEntropy',
+                         'TutorfEP',
+                         'PupilfEP',
+                         'TutorbEP',
+                         'PupilbEP',
                          'SpectralDistance',
+                         'TutorSpread',
+                         'PupilSpread',
                          'EuclideanDistance',
                          'DKL',
                          'LogDistance',
