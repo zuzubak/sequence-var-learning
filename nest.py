@@ -248,9 +248,17 @@ def tutor_compare(n_for_previous_ent=2):
                 log_value = ''
                 try:
                     tutor_spread = spread.spread(token_pca_data[tutor_ID + '_' + syllable])
+                except:
+                    tutor_spread = ''
+                try:
                     pupil_spread = spread.spread(token_pca_data[pupil_ID + '_' + syllable])
                 except:
-                    pass
+                    pupil_spread = ''
+                try:
+                    cloud_distance = spread.sim(token_pca_data[tutor_ID + '_' + syllable], 
+                                                                token_pca_data[pupil_ID + '_' + syllable])
+                except:
+                    cloud_distance = ''
                 try:
                     tutor_pca = pca_data[tutor_ID][syllable]
                     pupil_pca = pca_data[pupil_ID][syllable]
@@ -291,6 +299,7 @@ def tutor_compare(n_for_previous_ent=2):
                     spectral_distance,
                     tutor_spread,
                     pupil_spread,
+                    cloud_distance,
                     divergence,
                     dkl_value,
                     log_value,
@@ -323,6 +332,7 @@ def tutor_compare(n_for_previous_ent=2):
                          'SpectralDistance',
                          'TutorSpread',
                          'PupilSpread',
+                         'CloudDistance',
                          'EuclideanDistance',
                          'DKL',
                          'LogDistance',
