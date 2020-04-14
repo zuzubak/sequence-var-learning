@@ -20,7 +20,7 @@ def graph_spectrogram(wav_file,directory,ID='no_ID'):
     ax.axis('off') #turn off x (time) and y (frequency) axes
     pxx, freqs, bins, im = ax.specgram(x=data, Fs=rate, noverlap=511, NFFT=512)
     ax.set_ylim([0,10000])
-    fig.set_size_inches(len(data)/8000,1.5) #scale the figure by the length (in time) of the audio sample being plotted, so that output images for longer samples are wider.
+    fig.set_size_inches(len(data)/12000,1) #scale the figure by the length (in time) of the audio sample being plotted, so that output images for longer samples are wider.
     plt.savefig(directory+'spectrograms/'+ID+'.png', dpi=400, frameon=False)
 
 def graph_spectrogram2(wav_file,directory,ID='no_ID'):
@@ -30,10 +30,12 @@ def graph_spectrogram2(wav_file,directory,ID='no_ID'):
     plt.show()
 
 def get_syls(directory,prepad=20,postpad=20,shuffle=True,n=50, notbatch='notbatch'):
-    if not os.path.exists(directory+'snippets'):
-        os.makedirs(directory+'snippets')
-    if not os.path.exists(directory+'spectrograms'):
-        os.makedirs(directory+'spectrograms')
+    for fp in [directory+'snippets', directory+'spectrograms']:
+        if os.path.exists(fp):
+            for file in os.listdir(fp):
+                os.remove(fp+'/'+file)
+            os.rmdir(fp)
+        os.makedirs(fp)
     notmat_lines_list = list(open(directory+notbatch)) #extract a list of labelled songfiles
     notmat_list = [directory+value[:value.index('\n')] for value in notmat_lines_list] #extract a list of labelled songfiles
     if shuffle==True: #randomize the order in which the files are processed, if the parameter "shuffle" is set to True
@@ -97,3 +99,10 @@ def batch_slides(directory):
         if '.' not in bird_directory:
             get_syls(directory+bird_directory+'/')
             make_pptx(directory+bird_directory+'/')
+
+def sample_size(directory,ss_list = [30,50,75,100,150]):
+    for bird_directory in os.listdir(directory):
+        if '.' not in bird_directory:
+            for ss in ss_list:
+                get_syls(directory+bird_directory+'/', n=ss)
+                make_pptx(directory+bird_directory+'/', fname=str(ss)+'_categorization.pptx')
