@@ -1,7 +1,7 @@
 
 
 def get_pca(
-    filepath = './output/spectral_MK_PCA.csv',
+    filepath = './output/PCA_tokens.csv',
     features = [
         'MeanFreq',
         'SpecDense',
@@ -98,7 +98,7 @@ def get_pca_matrix():
         out_dict[birdID][syllable] = row
     return out_dict
 
-def tokens_by_type(filepath='/Users/zuzubak/projects/bf-ngrams/output/PCA_tokens.csv'):
+def tokens_by_type(filepath='./output/PCA_tokens.csv'):
     previous_result = get_pca(filepath=filepath)
     out_dict = {}
     for index in previous_result.index:

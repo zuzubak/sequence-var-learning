@@ -12,9 +12,12 @@ import imp
 import math
 import spread
 import pickle_commands as pc
+import Song_D_KL_calc_MK as sdkl_mk
+import syllabify
 imp.reload(spectral_pca)
 imp.reload(dkl)
 imp.reload(batchent)
+imp.reload(syllabify)
 
 meta_nest_dict = {
     'BrownBlue': ['br82bl42', 'br81bl41', 'tutor_bl5wh5'],
@@ -246,6 +249,8 @@ def tutor_compare(n_for_previous_ent=2):
                 divergence=''
                 dkl_value = ''
                 log_value = ''
+                SDKL1 = ''
+                SDKL2 = ''
                 try:
                     tutor_spread = spread.spread(token_pca_data[tutor_ID + '_' + syllable])
                 except:
@@ -267,6 +272,15 @@ def tutor_compare(n_for_previous_ent=2):
                 except:
                     pass
                 if category == 'Retained':
+                    try:
+                        tutor_fp = 'C:/Users/SakataWoolleyLab/Desktop/BFfromLogan/'+nest+'/'+tutor_ID+'/'
+                        pupil_fp = 'C:/Users/SakataWoolleyLab/Desktop/BFfromLogan/'+nest+'/'+pupil_ID+'/'
+                        SDKL_output_list = sdkl_mk.main_program(tutor_fp, tutor_fp+'syllables/'+syllable+'/', pupil_fp+'syllables/'+syllable+'/', 1, 1)
+                        SDKL1 = SDKL_output_list[5]
+                        SDKL2 = SDKL_output_list[6]
+                    except:
+                        pass
+                    print('SDKL1: '+SDKL1+'; SDKL2: '+SDKL2)
                     try:
                         divergence = divergence_data[nest][pupil_ID][tuple(
                             syllable)]['divergence']
@@ -304,7 +318,9 @@ def tutor_compare(n_for_previous_ent=2):
                     dkl_value,
                     log_value,
                     tutor_previous_ent,
-                    pupil_previous_ent]
+                    pupil_previous_ent,
+                    SDKL1,
+                    SDKL2]
                 for feature in tutor_spectral_data:
                     pupil_dict[syllable].append(feature)
             nest_dict[pupil_ID] = pupil_dict
@@ -338,12 +354,14 @@ def tutor_compare(n_for_previous_ent=2):
                          'LogDistance',
                          'TutorPreviousEnt',
                          'PupilPreviousEnt',
+                         'SDKL1',
+                         'SDKL2',
                          'MeanFreq',
                          'SpecDense',
                          'Duration',
                          'LoudEnt',
                          'SpecTempEnt',
-                         'meanLoud'])
+                         'meanLoud',])
         for row in matrix_version:
             writer.writerow(row)
     return matrix_version
