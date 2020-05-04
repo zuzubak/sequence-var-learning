@@ -1,5 +1,5 @@
 # BF-NGRAMS
-This package contains scripts for analyzing transitional probabilities and Shannon entropy using various orders of Markov models. Input sequences are strings of characters, where each character is read as a "word" (as per birdsong labelling conventions).
+This repository contains scripts for various acoustic and syntactic analyses of birdsong -- most of which are summarized in [my master's thesis](https://officerloud.files.wordpress.com/2020/05/260684759_kennedy_malcolm_biology_thesis-2-2.pdf). In particular, they focus on computing Shannon entropy using various orders of Markov models; and computing "acoustic distance" between acoustic elements in the father and sons' songs.
 
 ## Setup
 You must have NLTK and numpy installed:
