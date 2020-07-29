@@ -14,6 +14,7 @@ import spread
 import pickle_commands as pc
 import Song_D_KL_calc_MK as sdkl_mk
 import syllabify
+import acoustic_transition_entropy
 imp.reload(spectral_pca)
 imp.reload(dkl)
 imp.reload(batchent)
@@ -129,84 +130,9 @@ def branch_point_differences(n,mode):
             writer.writerow(row)
     return [matrix_version,syllables_dict]
 
-
-def compare(n_for_previous_ent=2, ent_data=None):
-    pca_data = spectral_pca.get_pca_matrix()
-    if ent_data is None:
-        ent_data = batchent.batch_syl_info_and_feats()
-    divergence_data = branch_point_differences(2,'euclidean')[1]
-    previous_ent_data = previous_ent.batch_pe(n=n_for_previous_ent)
-    out_dict = {}
-    for nest, birds_list in meta_nest_dict.items():
-        nest_dict = {}
-        pupil_IDs = birds_list[:-1]
-        tutor_ID = birds_list[-1]
-        tutor_syllables = pca_data[tutor_ID].keys()
-        for pupil_ID in pupil_IDs:
-            pupil_dict = {}
-            try:
-                pupil_syllables = pca_data[pupil_ID].keys()
-                retained_syllables = [
-                    value for value in tutor_syllables if value in pupil_syllables]
-                dropped_syllables = [
-                    value for value in tutor_syllables if value not in pupil_syllables]
-                for syllable in retained_syllables:
-                    for row in ent_data:
-                        if row[0] == pupil_ID and row[1] == syllable:
-                            pupil_entropy = row[2]
-                        if row[0] == tutor_ID and row[1] == syllable:
-                            tutor_entropy = row[2]
-                            tutor_spectral_data = row[-6:]
-                    tutor_pca = pca_data[tutor_ID][syllable]
-                    pupil_pca = pca_data[pupil_ID][syllable]
-                    spectral_distance = distance.euclidean(
-                        tuple(tutor_pca), tuple(pupil_pca))
-                    divergence = divergence_data[nest][pupil_ID][tuple(
-                        syllable)]['divergence']
-                    tutor_previous_ent = previous_ent_data[tutor_ID][syllable]
-                    pupil_previous_ent = previous_ent_data[pupil_ID][syllable]
-                    pupil_dict[syllable] = [
-                        tutor_entropy,
-                        pupil_entropy,
-                        spectral_distance,
-                        divergence,
-                        tutor_previous_ent,
-                        pupil_previous_ent]
-                    for feature in tutor_spectral_data:
-                        pupil_dict[syllable].append(feature)
-            except BaseException:
-                pass
-            nest_dict[pupil_ID] = pupil_dict
-        out_dict[nest] = nest_dict
-    matrix_version = []
-    for nest, nestdict in out_dict.items():
-        for bird, birddict in nestdict.items():
-            for syl, syllist in birddict.items():
-                matrix_version.append([nest, bird, syl] + syllist)
-    with open("./output/nest_learning.csv", 'w') as output_file:
-        writer = csv.writer(output_file)
-        writer.writerow(['Nest',
-                         'BirdID',
-                         'Syllable',
-                         'TutorEntropy',
-                         'PupilEntropy',
-                         'SpectralDistance',
-                         'Divergence',
-                         'TutorPreviousEnt',
-                         'PupilPreviousEnt',
-                         'MeanFreq',
-                         'SpecDense',
-                         'Duration',
-                         'LoudEnt',
-                         'SpecTempEnt',
-                         'meanLoud'])
-        for row in matrix_version:
-            writer.writerow(row)
-    return matrix_version
-
 def tutor_compare(n_for_previous_ent=2):
-    pca_data = spectral_pca.get_pca_matrix()
-    token_pca_data = spectral_pca.tokens_by_type()
+    pca_data = spectral_pca.get_medians()
+    token_pca_data = spectral_pca.tokens_by_type_5D()
     forwards_ent_data = pc.depickle('forwards_ent_data')
     backwards_ent_data = pc.depickle('backwards_ent_data')
     fEP = pc.depickle('fEP')
@@ -215,6 +141,8 @@ def tutor_compare(n_for_previous_ent=2):
     dkl_data = branch_point_differences(2,'dkl')[1]
     log_data = branch_point_differences(2,'log')[1]
     previous_ent_data = previous_ent.batch_pe(n=n_for_previous_ent)
+    tutor_previous_spread_dict = acoustic_transition_entropy.acoustic_spread()
+    tutor_next_spread_dict = acoustic_transition_entropy.acoustic_spread(mode='forward')
     out_dict = {}
     for nest, birds_list in meta_nest_dict.items():
         nest_dict = {}
@@ -229,7 +157,7 @@ def tutor_compare(n_for_previous_ent=2):
                 value for value in tutor_syllables if value in pupil_syllables]
             dropped_syllables = [
                 value for value in tutor_syllables if value not in pupil_syllables]
-            for syllable in tutor_syllables:
+            for syllable in [syllable for syllable in tutor_syllables if syllable != 'i']:
                 try:
                     prevalence = prevalence_dict[tutor_ID+'_'+syllable]
                     category = category_dict[pupil_ID+'_'+syllable]
@@ -251,6 +179,7 @@ def tutor_compare(n_for_previous_ent=2):
                 log_value = ''
                 SDKL1 = ''
                 SDKL2 = ''
+                tutor_previous_spread = ''
                 try:
                     tutor_spread = spread.spread(token_pca_data[tutor_ID + '_' + syllable])
                 except:
@@ -271,6 +200,12 @@ def tutor_compare(n_for_previous_ent=2):
                         tuple(tutor_pca), tuple(pupil_pca))
                 except:
                     pass
+                try:
+                    tutor_previous_spread = tutor_previous_spread_dict[tutor_ID+'_'+syllable]
+                    tutor_next_spread = tutor_next_spread_dict[tutor_ID+'_'+syllable]
+                except BaseException:
+                    tutor_previous_spread = ''
+                    tutor_next_spread = ''
                 if category == 'Retained':
                     try:
                         tutor_fp = 'C:/Users/SakataWoolleyLab/Desktop/BFfromLogan/'+nest+'/'+tutor_ID+'/'
@@ -311,6 +246,8 @@ def tutor_compare(n_for_previous_ent=2):
                     direction_dict['bEP']['tutor'],
                     direction_dict['bEP']['pupil'],
                     spectral_distance,
+                    tutor_previous_spread,
+                    tutor_next_spread,
                     tutor_spread,
                     pupil_spread,
                     cloud_distance,
@@ -346,6 +283,8 @@ def tutor_compare(n_for_previous_ent=2):
                          'TutorbEP',
                          'PupilbEP',
                          'SpectralDistance',
+                         'TutorPreviousSpread',
+                         'TutorNextSpread',
                          'TutorSpread',
                          'PupilSpread',
                          'CloudDistance',

@@ -5,8 +5,10 @@ import random
 
 def spread(matrix):
     matrix = [tuple(point) for point in matrix]
-    centroid = (sum([point[0] for point in matrix])/len(matrix), 
-        sum([point[0] for point in matrix])/len(matrix))
+    centroid = []
+    for i in range(len(matrix[0])):
+        centroid.append(sum([point[i] for point in matrix])/len(matrix))
+    centroid = tuple(centroid)
     spread = sum([distance.euclidean(centroid,point) for point in matrix])/len(matrix)
     return spread
 
